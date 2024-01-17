@@ -1,0 +1,45 @@
+[tool.black]
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.poetry]
+name = "ectf_tools"
+version = "1.0"
+description = "eCTF Tools for the 2024 eCTF"
+authors = ["Fritz Stine <fstine@mitre.org>"]
+readme = "README.md"
+packages = [{include = "ectf_tools"}]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pyserial = "^3.5"
+argparse = "^1.4.0"
+loguru = "^0.7.2"
+gdbgui = "^0.15.2.0"
+tqdm = "^4.66.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+ectf_build_ap = "ectf_tools.build_ap:main"
+ectf_build_comp = "ectf_tools.build_comp:main"
+ectf_build_depl = "ectf_tools.build_depl:main"
+ectf_attestation = "ectf_tools.attestation_tool:main"
+ectf_boot = "ectf_tools.boot_tool:main"
+ectf_list = "ectf_tools.list_tool:main"
+ectf_replace = "ectf_tools.replace_tool:main"
+ectf_update = "ectf_tools.update:main"
