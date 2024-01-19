@@ -166,15 +166,12 @@ Flashing the MAX78000 is done through the eCTF Bootloader. You will need to init
 This can be done easily by dragging and dropping the provided bootloader image to the DAPLink interface. DAPLink will show up as an external drive when connected to your system.
 
 ```
-ectf_update -h
-usage: ectf_update [-h] -in INFILE --port PORT [-s]
+ectf_update [-h] --infile INFILE --port PORT
 
-options:
-  -h, --help            show this help message and exit
-  -in INFILE, --infile INFILE
-                        Path to the input binary
-  --port PORT           Serial port
-  -s, --secure          Update a secured or insecure firmware image
+optional arguments:
+  -h, --help       show this help message and exit
+  --infile INFILE  Path to the input binary
+  --port PORT      Serial port
 ```
 
 **Example Utilization**
