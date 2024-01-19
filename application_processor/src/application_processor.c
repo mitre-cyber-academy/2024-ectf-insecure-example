@@ -316,7 +316,7 @@ int attest_component(uint32_t component_id) {
     }
 
     // Print out attestation data 
-    print_info("C>0x%08x", component_id);
+    print_info("C>0x%08x\n", component_id);
     print_info("%s\n", receive_buffer);
     return SUCCESS_RETURN;
 }
