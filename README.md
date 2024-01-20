@@ -163,8 +163,9 @@ ectf_build_comp -d ../ectf-2024-example -on comp -od build -id 0x11111125 -b "Co
 
 ## Flashing
 Flashing the MAX78000 is done through the eCTF Bootloader. You will need to initially flash the eCTF Bootloader onto the provided hardware. 
-This can be done easily by dragging and dropping the provided bootloader image to the DAPLink interface. DAPLink will show up as an external drive when connected to your system.
+This can be done easily by dragging and dropping the [provided bootloader](https://ectfmitre.gitlab.io/ectf-website/2024/components/bootloader.html) (for design phase:`insecure.bin`) to the DAPLink interface. DAPLink will show up as an external drive when connected to your system. Succesfull installation would make a blue LED flash on the board.
 
+To flash a specific bootloader image on the board (AP or Components), use `ectf_update`.
 ```
 ectf_update [-h] --infile INFILE --port PORT
 
