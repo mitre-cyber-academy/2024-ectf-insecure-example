@@ -214,7 +214,7 @@ int i2c_simple_write_data_generic(i2c_addr_t addr, ECTF_I2C_REGS reg, uint8_t le
     mxc_i2c_req_t request;
     request.i2c = I2C_INTERFACE;
     request.addr = addr;
-    request.tx_len = len+1;
+    request.tx_len = (unsigned int)len + 1;
     request.tx_buf = packet;
     request.rx_len = 0;
     request.rx_buf = 0;
