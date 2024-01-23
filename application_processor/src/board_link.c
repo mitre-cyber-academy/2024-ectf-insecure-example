@@ -89,11 +89,11 @@ int poll_and_receive_packet(i2c_addr_t address, uint8_t* packet) {
         MXC_Delay(50);
     }
 
-    uint8_t len = i2c_simple_read_transmit_len(address);
+    int len = i2c_simple_read_transmit_len(address);
     if (len < SUCCESS_RETURN) {
         return ERROR_RETURN;
     }
-    result = i2c_simple_read_data_generic(address, TRANSMIT, len, packet);
+    result = i2c_simple_read_data_generic(address, TRANSMIT, (uint8_t)len, packet);
     if (result < SUCCESS_RETURN) {
         return ERROR_RETURN;
     }
