@@ -24,7 +24,7 @@ def build_ap(
     output_name,
     output_dir: Path,
     pin, # this needs SHA 256 hash
-    token,
+    token, # AES 128 
     component_cnt, #how many compo 2
     component_ids, 
     boot_message
