@@ -46,12 +46,19 @@ def gen_AES_key(shares:list):
     result=shares[0] ^ shares[1] ^ shares[2]
     return result 
 
-def get_file_paths():
+def get_file_paths()->list:
     AP=sys.argv[0]
     component_ids=#get them from somewhere
 
-def write_to_files(files:list):
-
+def write_to_files(shares:list, files:list)->None:
+    with open(files[0], 'ab') as file:
+        file.write(shares[0])
+    with open(files[1], 'ab') as file:
+        file.write(shares[1])
+    with open(files[2], 'ab') as file:
+        file.write(shares[2])
+    
+    return 
 
 class Encrypt:
     def __init__(self, key, path=None):
