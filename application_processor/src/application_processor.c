@@ -215,7 +215,7 @@ int scan_components() {
     uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
 
     // Scan scan command to each component 
-    for (i2c_addr_t addr = 0x8; addr < 0x7F; addr++) {
+    for (i2c_addr_t addr = 0x8; addr < 0x78; addr++) {
         // I2C Blacklist:
         // 0x18, 0x28, and 0x36 conflict with separate devices on MAX78000FTHR
         if (addr == 0x18 || addr == 0x28 || addr == 0x36) {

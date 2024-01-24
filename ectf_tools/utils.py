@@ -78,7 +78,7 @@ def package_binary(bin_path, image_path):
 
 
 def i2c_address_is_blacklisted(addr):
-    addr &= 0x7F
+    addr &= 0xFF
     if 0 <= addr <= 7: 
         return True
     elif 0x78 <= addr <= 0x7F:
