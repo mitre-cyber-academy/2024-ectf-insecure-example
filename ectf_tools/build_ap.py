@@ -41,7 +41,7 @@ def build_ap(
                 logger.error(f"IDs ending in 0x0-0x7, 0x78-0x7F, and 0x18, 0x28, or 0x36 are reserved due to I2C conflicts")
                 exit(1)
     except ValueError:
-        logger.warn("Cannot parse component IDs to enforce I2C blacklist")
+        logger.warning("Cannot parse component IDs to enforce I2C blacklist")
 
     try:
         os.makedirs(output_dir, exist_ok=True)
