@@ -418,6 +418,10 @@ endif
 
 all:
 # 	Extend the functionality of the "all" recipe here
+	cc -fPIC -shared -o encryptlib.so encrypt.c
+
+
+	python file.py arg1 arg2 arg3 ....
 	arm-none-eabi-size --format=berkeley $(BUILD_DIR)/$(PROJECT).elf
 
 libclean: 

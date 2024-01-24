@@ -1,17 +1,11 @@
-# encrypt messages (AES)
-# append nonce to pair pin
-
-# To use this function, cryptography need to be installed
-# use command pip install cryptography in your virtual environment
-# documentation can be found here : https://pypi.org/project/pycrypto/
-
 import os
 import json
 import ctypes
 import sys
 from pathlib import Path
 import secrets
-# cc -fPIC -shared -o encryptlib.so encrypt.c
+import 
+# cc -fPIC -shared -o encryptlib.so encrypt.c check if linux has this
 
 path_to_lib = str(Path.cwd() / "encryptlib.so")
 encryptlib = ctypes.CDLL(path_to_lib)
@@ -33,7 +27,7 @@ decryption.restype = ctypes.c_char_p
 
 def create_shares(stream_length=16):
     """
-    The function returns 3 random byte streams and 
+    The function returns 3 random byte streams and k1 k2 k3
     """
     byte_stream1 = secrets.token_bytes(stream_length)
     byte_stream2 = secrets.token_bytes(stream_length)
@@ -42,11 +36,33 @@ def create_shares(stream_length=16):
 
 def gen_AES_key(shares:list):
     # get all the byte shares and xor them together, return the final byte
+    # this returns the K 
 
     result=shares[0] ^ shares[1] ^ shares[2]
-    return result 
+    return result # this is the K = k1 ^ k2 ^ k3
+
+   # This is for Ap
+    """
+    1. Get pin, token, component ids, component count boot message
+    2. Get the ids, create file in deployment folder 
+    3. Encrypt using AES for Token 
+    4. Encrypt using SHA256 for Pins 
+    5. Write all the encrypted messages (Pin sha 256, Token AES)
+    """
+   # this is for deployment
+    """
+    1. Read the deployment file, find its respective ID
+    2. Read K_share, K from the file, if exist. Otherwise, empty
+    3. Read the parmeter.h get all clear-text attestation data 
+    4. Encrypt All attestation data and write back to the .h file
+    """
+
+
 
 def get_file_paths()->list:
+    fh = open(Path("./inc/ectf_params.h"), "r")
+    
+    
     AP=sys.argv[0]
     component_ids=#get them from somewhere
 
@@ -59,6 +75,23 @@ def write_to_files(shares:list, files:list)->None:
         file.write(shares[2])
     
     return 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 class Encrypt:
     def __init__(self, key, path=None):
