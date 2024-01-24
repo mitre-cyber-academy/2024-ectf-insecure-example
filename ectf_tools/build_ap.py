@@ -38,7 +38,7 @@ def build_ap(
             component_id = int(component_id.strip(), 0)
             if i2c_address_is_blacklisted(component_id):
                 logger.error(f"Invalid component ID {component_id:x}")
-                logger.error(f"IDs ending in 0x0-0x7, 0x78-0x7F, and 0x18, 0x28, or 0x36 are reserved due to I2C conflicts")
+                logger.error(f"IDs ending in 0x00-0x07, 0x78-0x7F, and 0x18, 0x28, or 0x36 are reserved due to I2C conflicts")
                 exit(1)
     except ValueError:
         logger.warning("Cannot parse component IDs to enforce I2C blacklist")
