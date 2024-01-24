@@ -216,8 +216,9 @@ int scan_components() {
 
     // Scan scan command to each component 
     for (i2c_addr_t addr = 0x8; addr < 0x7F; addr++) {
-        // I2C Blacklist - 0x36 conflicts with separate device on MAX78000FTHR
-        if (addr == 0x36) {
+        // I2C Blacklist:
+        // 0x18, 0x28, and 0x36 conflict with separate devices on MAX78000FTHR
+        if (addr == 0x18 || addr == 0x28 || addr == 0x36) {
             continue;
         }
 
