@@ -16,7 +16,7 @@ import asyncio
 from pathlib import Path
 import os
 
-from ectf_tools.utils import run_shell, package_binary
+from ectf_tools.utils import run_shell, package_binary, i2c_address_is_blacklisted
 
 
 def build_ap(
@@ -32,6 +32,16 @@ def build_ap(
     """
     Build an application processor.
     """
+
+    try:
+        for component_id in component_ids.split(","):
+            component_id = int(component_id.strip(), 0)
+            if i2c_address_is_blacklisted(component_id):
+                logger.error(f"Invalid component ID {component_id:x}")
+                logger.error(f"IDs ending in 0x00-0x07, 0x78-0x7F, and 0x18, 0x28, or 0x36 are reserved due to I2C conflicts")
+                exit(1)
+    except ValueError:
+        logger.warning("Cannot parse component IDs to enforce I2C blacklist")
 
     try:
         os.makedirs(output_dir, exist_ok=True)
