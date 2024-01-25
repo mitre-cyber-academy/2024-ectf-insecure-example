@@ -215,9 +215,10 @@ int scan_components() {
     uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
 
     // Scan scan command to each component 
-    for (i2c_addr_t addr = 0x8; addr < 0x7F; addr++) {
-        // I2C Blacklist - 0x36 conflicts with separate device on MAX78000FTHR
-        if (addr == 0x36) {
+    for (i2c_addr_t addr = 0x8; addr < 0x78; addr++) {
+        // I2C Blacklist:
+        // 0x18, 0x28, and 0x36 conflict with separate devices on MAX78000FTHR
+        if (addr == 0x18 || addr == 0x28 || addr == 0x36) {
             continue;
         }
 
@@ -316,8 +317,8 @@ int attest_component(uint32_t component_id) {
     }
 
     // Print out attestation data 
-    print_info("C>0x%08x", component_id);
-    print_info("%s\n", receive_buffer);
+    print_info("C>0x%08x\n", component_id);
+    print_info("%s", receive_buffer);
     return SUCCESS_RETURN;
 }
 
