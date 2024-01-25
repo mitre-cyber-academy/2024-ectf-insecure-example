@@ -186,8 +186,14 @@ def write_key_to_files(file_paths:list)->None:
     """
     # hashlib.sha256(key.encode()).digest()
     
-    
+    shares=None
+    key=None
     if len(file_paths)==1:
-        shares=create_shares[2]
+        shares=create_shares(16,2)
+        key=gen_AES_key(shares)
+        f = open(Path(f"../deployment/{macro_information['ids'][0]}.txt"), "w")
+        f.write()
+        
+        
         
         
