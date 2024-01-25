@@ -209,6 +209,13 @@ int i2c_simple_read_data_generic(i2c_addr_t addr, ECTF_I2C_REGS reg, uint8_t len
 int i2c_simple_write_data_generic(i2c_addr_t addr, ECTF_I2C_REGS reg, uint8_t len, uint8_t* buf) {
     uint8_t packet[257];
     packet[0] = reg;
+
+    if (len > 255 || sizeof(buf) > 255) {
+        // Buffer overflow
+        // TODO: find a way to throw a more human-readable error message
+        return -1;
+    }
+    
     memcpy(&packet[1], buf, len);
     
     mxc_i2c_req_t request;
