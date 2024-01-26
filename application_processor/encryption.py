@@ -1,6 +1,6 @@
 import ctypes
 from pathlib import Path
-# cc -fPIC -shared -o encryptlib.so encrypt.c 
+# cc -fPIC -shared -o encryptlib.so encrypt.c check if linux has this
 
 path_to_lib = str(Path.cwd() / "encryptlib.so")
 encryptlib = ctypes.CDLL(path_to_lib)
