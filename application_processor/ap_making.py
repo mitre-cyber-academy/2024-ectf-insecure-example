@@ -244,13 +244,13 @@ def write_key_to_files(file_paths:list)->None:
     fh.write(change_byte_to_macro(shares[0],"KEY_SHARE")+"\n")
     
     if comp_val==1:
-        f.write(change_byte_to_macro(masks[0],f"MASK_{macro_information['ids'][0]}").encode())
-        f.write(change_byte_to_macro(masks[1],f"FINAL_MASK_{macro_information['ids'][0]}").encode())
+        fh.write(change_byte_to_macro(masks[0],f"MASK_{macro_information['ids'][0]}")+"\n")
+        fh.write(change_byte_to_macro(masks[1],f"FINAL_MASK_{macro_information['ids'][0]}")+"\n")
     else:
-        f.write(change_byte_to_macro(masks[0],f"MASK_{macro_information['ids'][0]}").encode())
-        f.write(change_byte_to_macro(masks[1],f"FINAL_MASK_{macro_information['ids'][0]}").encode())
-        f.write(change_byte_to_macro(masks[2],f"MASK_{macro_information['ids'][1]}").encode())
-        f.write(change_byte_to_macro(masks[3],f"FINAL_MASK_{macro_information['ids'][1]}").encode())
+        fh.write(change_byte_to_macro(masks[0],f"MASK_{macro_information['ids'][0]}")+"\n")
+        fh.write(change_byte_to_macro(masks[1],f"FINAL_MASK_{macro_information['ids'][0]}")+"\n")
+        fh.write(change_byte_to_macro(masks[2],f"MASK_{macro_information['ids'][1]}")+"\n")
+        fh.write(change_byte_to_macro(masks[3],f"FINAL_MASK_{macro_information['ids'][1]}")+"\n")
     
     fh.write("#endif\n")
     fh.close()
