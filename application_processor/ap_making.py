@@ -158,6 +158,19 @@ def get_file_paths()->list:
     count=macro_information["cnt"]
     return [ids[0]+".txt", ids[1]+".txt", count]
 
+def gen_masks(comp_cnt,len=16):
+    if comp_cnt==1:
+        F1=secrets.token_bytes(len)
+        M1=secrets.token_bytes(len)
+        return F1,F2
+    else:
+        F1=secrets.token_bytes(len)
+        F2=secrets.token_bytes(len)
+        M1=secrets.token_bytes(len)
+        M2=secrets.token_bytes(len)
+        return F1,F2,M1,M2
+
+
 def write_key_to_files(file_paths:list)->None:
     """
     Given some paths for component, writes the key shares repsectively to the file
@@ -166,7 +179,11 @@ def write_key_to_files(file_paths:list)->None:
     
     shares=None
     key=None
+    comp_val=0
+    masks=None
     if len(file_paths)==1:
+        masks=gen_masks(1)
+        comp_val=1
         shares=create_shares(16,2)
         key=gen_AES_key(shares)
 
@@ -175,29 +192,39 @@ def write_key_to_files(file_paths:list)->None:
         f.write(key)
         f.write(b'\n')
         f.write(change_byte_to_macro(shares[1],"KEY_SHARE").encode())
+        f.write(change_byte_to_macro(masks[0],"MASK").encode())
+        f.write(change_byte_to_macro(masks[1],"FINAL_MASK").encode())
         f.close()
     
     else:
+        comp_val=2
         shares=create_shares(16,3)
         key=gen_AES_key(shares)
+        masks=gen_masks(2)
 
         # Write the keys into the Component file
         f = open(Path(f"../deployment/{macro_information['ids'][0]}.txt"), "wb")
         f.write(key)
         f.write(b'\n')
         f.write(change_byte_to_macro(shares[1],"KEY_SHARE").encode())
+        f.write(b'\n')
+        f.write(change_byte_to_macro(masks[0],"MASK").encode())
+        f.write(b'\n')
+        f.write(change_byte_to_macro(masks[1],"FINAL_MASK").encode())
         f.close()
 
         f = open(Path(f"../deployment/{macro_information['ids'][1]}.txt"), "wb")
         f.write(key)
         f.write(b'\n')
         f.write(change_byte_to_macro(shares[2],"KEY_SHARE").encode())
+        f.write(b'\n')
+        f.write(change_byte_to_macro(masks[2],"MASK").encode())
+        f.write(b'\n')
+        f.write(change_byte_to_macro(masks[3],"FINAL_MASK").encode())
         f.close()
-
-
+        
 
     encryption_tool=ec.Encrypt(key) 
-
     encrypted_pin=encryption_tool.encrypt(macro_information['pin'])
     encrypted_token=encryption_tool.encrypt(macro_information['token'])
 
@@ -207,14 +234,26 @@ def write_key_to_files(file_paths:list)->None:
     fh.write("#define __ECTF_PARAMS__\n")
     fh.write(change_byte_to_macro(encrypted_pin,"AP_PIN")+"\n")
     fh.write(change_byte_to_macro(encrypted_token,"AP_TOKEN")+"\n")
-    fh.write(f"#define COMPONENT_IDS {macro_information['ids'][0]+' '+macro_information['ids'][1]}\n") 
+    if comp_val==2:
+        fh.write(f"#define COMPONENT_IDS {macro_information['ids'][0]+' '+macro_information['ids'][1]}\n") 
+    else:
+        fh.write(f"#define COMPONENT_IDS {macro_information['ids'][0]}\n") 
+        
     fh.write(f"#define COMPONENT_CNT {macro_information['cnt']}\n")
     fh.write(f"#define AP_BOOT_MSG \"{macro_information['message']}\"\n")
     fh.write(change_byte_to_macro(shares[0],"KEY_SHARE")+"\n")
+    
+    if comp_val==1:
+        f.write(change_byte_to_macro(masks[0],f"MASK_{macro_information['ids'][0]}").encode())
+        f.write(change_byte_to_macro(masks[1],f"FINAL_MASK_{macro_information['ids'][0]}").encode())
+    else:
+        f.write(change_byte_to_macro(masks[0],f"MASK_{macro_information['ids'][0]}").encode())
+        f.write(change_byte_to_macro(masks[1],f"FINAL_MASK_{macro_information['ids'][0]}").encode())
+        f.write(change_byte_to_macro(masks[2],f"MASK_{macro_information['ids'][1]}").encode())
+        f.write(change_byte_to_macro(masks[3],f"FINAL_MASK_{macro_information['ids'][1]}").encode())
+    
     fh.write("#endif\n")
     fh.close()
-
-
 
 
 
