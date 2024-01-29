@@ -73,3 +73,17 @@ uint8_t wait_and_receive_packet(uint8_t* packet) {
 
     return len;
 }
+
+// This different from the function above for adding timer to it.
+// Waiting that has passed 0.3 seconds will stop to prevent replay attack
+uint8_t timed_wait_and_receive_packet(uint8_t* packet) {
+    // while(!I2C_REGS[RECEIVE_DONE][0]);
+
+    // Change the waiting for signal loop
+    for(int i = 0; i < 3000000 && !I2C_REGS[RECEIVE_DONE][0]; ++i);
+
+    uint8_t len = I2C_REGS[RECEIVE_LEN][0];
+    memcpy(packet, (void*)I2C_REGS[RECEIVE], len);
+
+    return len;
+}
