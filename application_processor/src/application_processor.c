@@ -202,9 +202,29 @@ int issue_cmd(i2c_addr_t addr, uint8_t* transmit, uint8_t* receive) {
     return len;
 }
 
+// Custom made issue_cmd_custom for 3 way handshake. Need to understand when to use this custom
+// function over the regular one. The difference is that one need component to confirm freshness
+// of message while the other one doesnt need to. It depends on whether the component needs to do 
+// something from its end (like boot) but if it only needs to send encrypted information, then 
+// 2 way handshake is good.
+int issue_cmd_custom(i2c_addr_t addr, uint8_t* transmit, uint8_t* receive) {
+    // Send message
+    int result = send_packet(addr, sizeof(uint8_t), transmit);
+    if (result == ERROR_RETURN) {
+        return ERROR_RETURN;
+    }
+
+    // Receive message
+    int len = poll_and_receive_packet_custom(addr, receive); // Use secure custom function
+    if (len == ERROR_RETURN) {
+        return ERROR_RETURN;
+    }
+}
+
 /******************************** COMPONENT COMMS ********************************/
 
-int scan_components() {
+// We're assuming this doesn't need protection/modification
+int scan_components() { 
     // Print out provisioned component IDs
     for (unsigned i = 0; i < flash_status.component_cnt; i++) {
         print_info("P>0x%08x\n", flash_status.component_ids[i]);
@@ -239,6 +259,7 @@ int scan_components() {
     return SUCCESS_RETURN;
 }
 
+// Validation needs 2 way handshake
 int validate_components() {
     // Buffers for board link communication
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
@@ -270,6 +291,7 @@ int validate_components() {
     return SUCCESS_RETURN;
 }
 
+// Booting needs 3 way communication (Might need 4 way)
 int boot_components() {
     // Buffers for board link communication
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
@@ -285,7 +307,56 @@ int boot_components() {
         command->opcode = COMPONENT_CMD_BOOT;
         
         // Send out command and receive result
-        int len = issue_cmd(addr, transmit_buffer, receive_buffer);
+        int len = issue_cmd(addr, transmit_buffer, receive_buffer); 
+        if (len == ERROR_RETURN) {
+            print_error("Could not boot component\n");
+            return ERROR_RETURN;
+        }
+
+        // Print boot message from component
+        print_info("0x%x>%s\n", flash_status.component_ids[i], receive_buffer);
+    }
+    return SUCCESS_RETURN;
+}
+
+// Combining both functions to ensure security
+int validate_and_boot_components(){
+    // Buffers for board link communication
+    uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
+    uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
+
+    // Send validate command to each component
+    for (unsigned i = 0; i < flash_status.component_cnt; i++) {
+        // Set the I2C address of the component
+        i2c_addr_t addr = component_id_to_i2c_addr(flash_status.component_ids[i]);
+
+        // Create command message
+        command_message* command = (command_message*) transmit_buffer;
+        command->opcode = COMPONENT_CMD_VALIDATE;
+        
+        // Send out command and receive result
+        int len = issue_cmd_custom(addr, transmit_buffer, receive_buffer);
+        if (len == ERROR_RETURN) {
+            print_error("Could not validate component\n");
+            return ERROR_RETURN;
+        }
+
+        validate_message* validate = (validate_message*) receive_buffer;
+        // Check that the result is correct
+        if (validate->component_id != flash_status.component_ids[i]) {
+            print_error("Component ID: 0x%08x invalid\n", flash_status.component_ids[i]);
+            return ERROR_RETURN;
+        }
+        // Clearing Buffers
+        memset(receive_buffer, 0, MAX_I2C_MESSAGE_LEN);
+        memset(transmit_buffer, 0, MAX_I2C_MESSAGE_LEN);
+
+        // Create command message
+        command_message* command = (command_message*) transmit_buffer; // Is this necessary?
+        command->opcode = COMPONENT_CMD_BOOT;
+
+        // Send out command and receive result
+        int len = issue_cmd_custom(addr, transmit_buffer, receive_buffer); 
         if (len == ERROR_RETURN) {
             print_error("Could not boot component\n");
             return ERROR_RETURN;
@@ -321,6 +392,7 @@ int attest_component(uint32_t component_id) {
     print_info("%s", receive_buffer);
     return SUCCESS_RETURN;
 }
+
 
 /********************************* AP LOGIC ***********************************/
 
@@ -408,15 +480,11 @@ int validate_token() {
 
 // Boot the components and board if the components validate
 void attempt_boot() {
-    if (validate_components()) {
-        print_error("Components could not be validated\n");
+    if (validate_and_boot_components()) {
+        print_error("Failed to validate and/or boot components\n");
         return;
     }
     print_debug("All Components validated\n");
-    if (boot_components()) {
-        print_error("Failed to boot all components\n");
-        return;
-    }
     // Reference design flag
     // Remove this in your design
     char flag[37];
