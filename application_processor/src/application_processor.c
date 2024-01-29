@@ -269,13 +269,29 @@ int validate_and_boot_components(){
         // Create command message
         command_message* command = (command_message*) transmit_buffer;
         command->opcode = COMPONENT_CMD_VALIDATE;
-        
+
+        /*
+        //Make random number here and append it to the message
+        //Followed by encryption using the key that was provided for us during initialization
+
+
+        */
+
         // Send out command and receive result
         int len = issue_cmd_custom(addr, transmit_buffer, receive_buffer);
         if (len == ERROR_RETURN) {
             print_error("Could not validate component\n");
             return ERROR_RETURN;
         }
+        
+        /*
+        //Decrypt validate message using the key provided for us and 
+        //ensure that the random number is still contained within the message
+        //Make sure to correctly distinguish the random number that we made and the one given to us by component
+
+
+
+        */
 
         validate_message* validate = (validate_message*) receive_buffer;
         // Check that the result is correct
@@ -283,9 +299,18 @@ int validate_and_boot_components(){
             print_error("Component ID: 0x%08x invalid\n", flash_status.component_ids[i]);
             return ERROR_RETURN;
         }
+
         // Clearing Buffers
-        memset(receive_buffer, 0, MAX_I2C_MESSAGE_LEN);
-        memset(transmit_buffer, 0, MAX_I2C_MESSAGE_LEN);
+        //memset(receive_buffer, 0, MAX_I2C_MESSAGE_LEN);
+        //memset(transmit_buffer, 0, MAX_I2C_MESSAGE_LEN); DO I NEED TO MEMSET OR NO?
+
+        /*
+        //Make random number here OR use the random number given to us through components and append it to the message
+        //Followed by encryption using the key that was provided for us during initialization
+
+
+
+        */
 
         // Create command message
         command_message* command = (command_message*) transmit_buffer; // Is this necessary?
@@ -297,6 +322,17 @@ int validate_and_boot_components(){
             print_error("Could not boot component\n");
             return ERROR_RETURN;
         }
+        
+
+        /*
+        //Decrypt receive buffer and make sure that the random number is the same as the one that was sent
+
+        boot_message* boot = (boot_message*) receive_buffer; 
+        if (boot->random_number != random_number) {
+            print_error("Replay attack);
+            return ERROR_RETURN;
+        }
+        */
 
         // Print boot message from component
         print_info("0x%x>%s\n", flash_status.component_ids[i], receive_buffer);
