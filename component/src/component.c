@@ -72,6 +72,11 @@ typedef struct {
     uint32_t component_id;
 } scan_message;
 
+// Data type for receiving a boot message. NEEDS REVIEW, UNSURE HOW TO STRUCT
+typedef struct {
+    uint32_t number_id;
+} boot_message;
+
 /********************************* FUNCTION DECLARATIONS **********************************/
 // Core function definitions
 void component_process_cmd(void);
@@ -153,14 +158,18 @@ void component_process_cmd() {
 
     // Output to application processor dependent on command received
     switch (command->opcode) {
-    case COMPONENT_CMD_BOOT:
-        process_boot();
-        break;
+    /** We will not use this because the component should only boot
+        iff it recieves boot command from ap in a timely period, so the boot command
+        will be done within the process_validate function.
+    **/
+    // case COMPONENT_CMD_BOOT:
+    //     process_boot();
+    //     break;
     case COMPONENT_CMD_SCAN:
         process_scan();
         break;
     case COMPONENT_CMD_VALIDATE:
-        process_validate();
+        process_validate_and_boot();
         break;
     case COMPONENT_CMD_ATTEST:
         process_attest();
@@ -171,6 +180,7 @@ void component_process_cmd() {
     }
 }
 
+// We will not using this function
 void process_boot() {
     // The AP requested a boot. Set `component_boot` for the main loop and
     // respond with the boot message
@@ -188,11 +198,38 @@ void process_scan() {
     send_packet_and_ack(sizeof(scan_message), transmit_buffer);
 }
 
+// We will not using this function
 void process_validate() {
     // The AP requested a validation. Respond with the Component ID
     validate_message* packet = (validate_message*) transmit_buffer;
     packet->component_id = COMPONENT_ID;
     send_packet_and_ack(sizeof(validate_message), transmit_buffer);
+}
+
+
+// AP wants to the boot function, and makes the request to the componenet
+// The function will handle the boot process in component side.
+void process_validate_and_boot() {
+    // The AP requested a validation. Respond with the Component ID
+    validate_message* packet = (validate_message*) transmit_buffer;
+    packet->component_id = COMPONENT_ID;
+    send_packet_and_ack(sizeof(validate_message), transmit_buffer);
+    // After sending the validation check back to AP, the component will wait for 0.3 seconds for responds from AP.
+    // If it hears nothing, abort the process.
+    memset(receive_buffer, 0, MAX_I2C_MESSAGE_LEN); //Do we need to do this? There are no such thing in the original codes
+    if(timed_wait_and_receive_packet(receive_buffer) > 0){
+            command_message* command = (command_message*) receive_buffer;
+            if(command->opcode == COMPONENT_CMD_BOOT){
+                // It will sends the confirm boot message back with the y.
+                boot_message* packet = (boot_message*) transmit_buffer;
+                packet->number_id = COMPONENT_BOOT_MSG;
+                send_packet_and_ack(sizeof(boot_message), transmit_buffer);
+                boot();
+            }
+    }
+    else{
+        print_error("Didn't hear from the AP, boot aborted.")
+    }
 }
 
 void process_attest() {

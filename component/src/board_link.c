@@ -76,14 +76,20 @@ uint8_t wait_and_receive_packet(uint8_t* packet) {
 
 // This different from the function above for adding timer to it.
 // Waiting that has passed 0.3 seconds will stop to prevent replay attack
-uint8_t timed_wait_and_receive_packet(uint8_t* packet) {
-    // while(!I2C_REGS[RECEIVE_DONE][0]);
-
+// QUESTIONS: will the I2C_REGS be refreshed everytime we calls this function so we will get the new message? We don't want the old queue message be read and procceed.
+int timed_wait_and_receive_packet(uint8_t* packet) {
+    // while(!I2C_REGS[RECEIVE_DONE][0])
     // Change the waiting for signal loop
-    for(int i = 0; i < 3000000 && !I2C_REGS[RECEIVE_DONE][0]; ++i);
+    for(int i = 0; i < 3000000; ++i){
+        if(!I2C_REGS[RECEIVE_DONE][0]){
+            continue;
+        }
+        else{
+            uint8_t len = I2C_REGS[RECEIVE_LEN][0];
+            memcpy(packet, (void*)I2C_REGS[RECEIVE], len);
+            return 1;
+        }
+    }
 
-    uint8_t len = I2C_REGS[RECEIVE_LEN][0];
-    memcpy(packet, (void*)I2C_REGS[RECEIVE], len);
-
-    return len;
+    return -1;
 }
