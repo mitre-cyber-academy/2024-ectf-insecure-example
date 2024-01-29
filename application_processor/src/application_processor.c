@@ -65,6 +65,12 @@
 // Params allows for up to MAX_I2C_MESSAGE_LEN - 1 bytes to be send
 // along with the opcode through board_link. This is not utilized by the example
 // design but can be utilized by your design.
+
+// Data type for receiving a boot message. NEEDS REVIEW, UNSURE HOW TO STRUCT
+typedef struct {
+    uint32_t number_id;
+} boot_message;
+
 typedef struct {
     uint8_t opcode;
     uint8_t params[MAX_I2C_MESSAGE_LEN-1];
@@ -328,7 +334,7 @@ int validate_and_boot_components(){
         //Decrypt receive buffer and make sure that the random number is the same as the one that was sent
 
         boot_message* boot = (boot_message*) receive_buffer; 
-        if (boot->random_number != random_number) {
+        if (boot->random_id != random_number) {
             print_error("Replay attack);
             return ERROR_RETURN;
         }
