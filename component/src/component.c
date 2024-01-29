@@ -207,16 +207,22 @@ void process_validate() {
 }
 
 
+
+
 // AP wants to the boot function, and makes the request to the componenet
 // The function will handle the boot process in component side.
 void process_validate_and_boot() {
+
+    //This function is not completed, we need encryption and decryption stuff for every buffer transmiited and recieved. 
+
     // The AP requested a validation. Respond with the Component ID
     validate_message* packet = (validate_message*) transmit_buffer;
     packet->component_id = COMPONENT_ID;
     send_packet_and_ack(sizeof(validate_message), transmit_buffer);
+    memset(transmit_buffer, 0, MAX_I2C_MESSAGE_LEN);//Do we need to do this? There are no such thing in the original codes
     // After sending the validation check back to AP, the component will wait for 0.3 seconds for responds from AP.
     // If it hears nothing, abort the process.
-    memset(receive_buffer, 0, MAX_I2C_MESSAGE_LEN); //Do we need to do this? There are no such thing in the original codes
+    memset(receive_buffer, 0, MAX_I2C_MESSAGE_LEN); 
     if(timed_wait_and_receive_packet(receive_buffer) > 0){
             command_message* command = (command_message*) receive_buffer;
             if(command->opcode == COMPONENT_CMD_BOOT){
@@ -226,9 +232,12 @@ void process_validate_and_boot() {
                 send_packet_and_ack(sizeof(boot_message), transmit_buffer);
                 boot();
             }
+            else{
+                print_error("Didn't hear boot command from AP, boot aborted");
+            }
     }
     else{
-        print_error("Didn't hear from the AP, boot aborted.")
+        print_error("Didn't hear from the AP, boot aborted.");
     }
 }
 
