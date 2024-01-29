@@ -480,8 +480,9 @@ void attempt_attest() {
     uint32_t component_id;
     recv_input("Component ID: ", buf);
     sscanf(buf, "%x", &component_id);
-    attest_component(component_id);
-    print_success("Attest\n");
+    if(attest_component(component_id) == SUCCESS_RETURN) {
+        print_success("Attest\n");
+    }
 }
 
 /*********************************** MAIN *************************************/
