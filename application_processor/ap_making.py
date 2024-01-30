@@ -224,7 +224,7 @@ def write_key_to_files(file_paths:list)->None:
     fh = open("inc/ectf_params.h", "w")
     fh.write("#ifndef __ECTF_PARAMS__\n")
     fh.write("#define __ECTF_PARAMS__\n")
-    fh.write(f"#define AP_PIN {macro_information['pin']}"+"\n")
+    fh.write(f"#define AP_PIN \"{macro_information['pin']}\""+"\n")
     fh.write(f"#define AP_TOKEN \"{macro_information['token']}\" "+"\n")
     if comp_val==2:
         fh.write(f"#define COMPONENT_IDS {macro_information['ids'][0]+' '+macro_information['ids'][1]}\n") 
