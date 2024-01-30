@@ -1,7 +1,6 @@
 from pathlib import Path
 import secrets
 import re
-import encryption as ec
 
 
 # this is for deployment
@@ -84,9 +83,7 @@ macro_information={}
 # End of Global Data Definition: 
 
 def get_ids(ap_macro):
-    pattern = r'0x[\da-fA-F]+'
-    match = re.search(pattern, ap_macro)
-    
+    pattern = r'0x[\da-fA-F]+'    
     ids = re.findall(pattern, ap_macro)
     return ids
 
@@ -222,18 +219,13 @@ def write_key_to_files(file_paths:list)->None:
         f.write(b'\n')
         f.write(change_byte_to_macro(masks[3],"FINAL_MASK").encode())
         f.close()
-        
-
-    encryption_tool=ec.Encrypt(key) 
-    encrypted_pin=encryption_tool.encrypt(macro_information['pin'])
-    encrypted_token=encryption_tool.encrypt(macro_information['token'])
 
     # Finally write the keys into the AP's parameter header
     fh = open("inc/ectf_params.h", "w")
     fh.write("#ifndef __ECTF_PARAMS__\n")
     fh.write("#define __ECTF_PARAMS__\n")
-    fh.write(change_byte_to_macro(encrypted_pin,"AP_PIN")+"\n")
-    fh.write(change_byte_to_macro(encrypted_token,"AP_TOKEN")+"\n")
+    fh.write(f"#define AP_PIN {macro_information['pin']}"+"\n")
+    fh.write(f"#define AP_TOKEN \"{macro_information['token']}\" "+"\n")
     if comp_val==2:
         fh.write(f"#define COMPONENT_IDS {macro_information['ids'][0]+' '+macro_information['ids'][1]}\n") 
     else:
@@ -244,13 +236,13 @@ def write_key_to_files(file_paths:list)->None:
     fh.write(change_byte_to_macro(shares[0],"KEY_SHARE")+"\n")
     
     if comp_val==1:
-        fh.write(change_byte_to_macro(masks[0],f"MASK_{macro_information['ids'][0]}")+"\n")
-        fh.write(change_byte_to_macro(masks[1],f"FINAL_MASK_{macro_information['ids'][0]}")+"\n")
+        fh.write(change_byte_to_macro(masks[0],f"M1")+"\n")
+        fh.write(change_byte_to_macro(masks[1],"F1")+"\n")
     else:
-        fh.write(change_byte_to_macro(masks[0],f"MASK_{macro_information['ids'][0]}")+"\n")
-        fh.write(change_byte_to_macro(masks[1],f"FINAL_MASK_{macro_information['ids'][0]}")+"\n")
-        fh.write(change_byte_to_macro(masks[2],f"MASK_{macro_information['ids'][1]}")+"\n")
-        fh.write(change_byte_to_macro(masks[3],f"FINAL_MASK_{macro_information['ids'][1]}")+"\n")
+        fh.write(change_byte_to_macro(masks[0],f"M1")+"\n")
+        fh.write(change_byte_to_macro(masks[1],f"F1")+"\n")
+        fh.write(change_byte_to_macro(masks[2],f"M2")+"\n")
+        fh.write(change_byte_to_macro(masks[3],f"F2")+"\n")
     
     fh.write("#endif\n")
     fh.close()

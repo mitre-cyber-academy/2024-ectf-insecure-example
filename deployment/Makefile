@@ -8,10 +8,6 @@ __check_defined = \
 		$(error Undefined $1))
 
 all:
-	cc -fPIC -shared -o encryptlib.so encrypt.c
-	cp encryptlib.so ../application_processor/encryptlib.so
-	cp encryptlib.so ../component/encryptlib.so
-	rm -f ./encryptlib.so
 	echo "#define SECRET 1234" > global_secrets.h
 
 clean:

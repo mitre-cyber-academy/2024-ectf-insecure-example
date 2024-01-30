@@ -56,15 +56,9 @@ def build_component(
     fh.write("#define __ECTF_PARAMS__\n")
     fh.write(f"#define COMPONENT_ID {component_id}\n")
     fh.write(f"#define COMPONENT_BOOT_MSG \"{boot_message}\"\n")
-    
-    
-    # 2.txt K, K2
-    
-    # define k_share k2 
-    
-    fh.write(f"#define ATTESTATION_LOC \"{attestation_location}\"\n") #encyrpt with K 
-    fh.write(f"#define ATTESTATION_DATE \"{attestation_date}\"\n")   #encyrpt with K 
-    fh.write(f"#define ATTESTATION_CUSTOMER \"{attestation_customer}\"\n")  #encyrpt with K 
+    fh.write(f"#define ATTESTATION_LOC \"{attestation_location}\"\n") 
+    fh.write(f"#define ATTESTATION_DATE \"{attestation_date}\"\n")   
+    fh.write(f"#define ATTESTATION_CUSTOMER \"{attestation_customer}\"\n") 
     fh.write("#endif\n")
     fh.close()
 
