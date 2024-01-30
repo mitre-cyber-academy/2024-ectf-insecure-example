@@ -53,7 +53,7 @@
 */
 
 // Flash Macros
-#define FLASH_ADDR ((MXC_FLASH_MEM_BASE + MXC_FLASH_MEM_SIZE) - (1 * MXC_FLASH_PAGE_SIZE))
+#define FLASH_ADDR ((MXC_FLASH_MEM_BASE + MXC_FLASH_MEM_SIZE) - (2 * MXC_FLASH_PAGE_SIZE))
 #define FLASH_MAGIC 0xDEADBEEF
 
 // Library call return types
