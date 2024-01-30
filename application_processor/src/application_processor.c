@@ -40,18 +40,9 @@
 #include "ectf_params.h"
 #include "global_secrets.h"
 
-/********************************* CONSTANTS **********************************/
+/********************************* Global Variables **********************************/
+uint8_t synthesized=0; // when you do the command, check if the thing is synthesized yet or not, if not, synthesize the whole thing.
 
-// Passed in through ectf-params.h
-// Example of format of ectf-params.h shown here
-/*
-#define AP_PIN { 0xDF, 0x68, 0x06, 0x80, 0x0C, 0xAA, 0xA2, 0x0E, 0x11, 0xD9, 0x25, 0x60, 0x6B, 0xA7, 0xA9, 0x9A }
-#define AP_TOKEN { 0x2F, 0xA9, 0xB9, 0x1A, 0x8A, 0x25, 0x0F, 0x97, 0x62, 0x67, 0x74, 0xBE, 0x49, 0x47, 0x35, 0x46 }
-#define COMPONENT_IDS 0x123444 0x334521
-#define COMPONENT_CNT 2
-#define AP_BOOT_MSG "message"
-#define KEY_SHARE { 0x83, 0xBC, 0x1D, 0x26, 0x68, 0xAD, 0x0A, 0xFF, 0xF5, 0x42, 0xAD, 0xAD, 0xF1, 0xCB, 0x03, 0x8F }
-*/
 
 // Flash Macros
 #define FLASH_ADDR ((MXC_FLASH_MEM_BASE + MXC_FLASH_MEM_SIZE) - (1 * MXC_FLASH_PAGE_SIZE))
