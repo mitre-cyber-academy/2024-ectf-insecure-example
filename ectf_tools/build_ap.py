@@ -50,7 +50,9 @@ def build_ap(
         raise
 
     logger.info("Creating parameters for build")
-    fh = open(design / Path("application_processor/inc/ectf_params.h"), "w")
+    try:
+        params_file = design / Path("application_processor/inc/ectf_params.h")
+        with open(params_file, "w") as fh:
     fh.write("#ifndef __ECTF_PARAMS__\n")
     fh.write("#define __ECTF_PARAMS__\n")
     fh.write(f"#define AP_PIN \"{pin}\"\n")
@@ -59,9 +61,11 @@ def build_ap(
     fh.write(f"#define COMPONENT_CNT {component_cnt}\n")
     fh.write(f"#define AP_BOOT_MSG \"{boot_message}\"\n")
     fh.write("#endif\n")
-    fh.close()
+    
 
-    output_dir = os.path.abspath(output_dir)
+    except Exception as e:
+        logger.error(f"Error writing to file: {e}")
+    os.path.abspath(output_dir)
     output_elf = f"{output_dir}/{output_name}.elf"
     output_bin = f"{output_dir}/{output_name}.bin"
     output_img = f"{output_dir}/{output_name}.img"
