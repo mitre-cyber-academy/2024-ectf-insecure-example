@@ -98,7 +98,10 @@ void process_attest(void);
 uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
 uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
 uint8_t string_buffer[MAX_I2C_MESSAGE_LEN];
+uint8_t cipher_text_buffer[MAX_I2C_MESSAGE_LEN];
+uint8_t plain_text_buffer[MAX_I2C_MESSAGE_LEN];
 uint8_t plaintext[AES_SIZE];
+uint8_t ciphertext[AES_SIZE];
 
 /******************************* POST BOOT FUNCTIONALITY *********************************/
 /**
@@ -261,13 +264,45 @@ void process_attest() {
     }
 
     // Start to move atttestation data into the transmit_buffer
+    memset(string_buffer, 0, sizeof(string_buffer));
     uint8_t len = sprintf((char*)string_buffer, "LOC>%s\nDATE>%s\nCUST>%s\n",
                 ATTESTATION_LOC, ATTESTATION_DATE, ATTESTATION_CUSTOMER) + 1;
     
     uint8_t encrypted_len = 8 + len + 1;
-    if(encrypted_len)
+    string_buffer[len] = encrypted_len;
+    if(encrypted_len % 16 != 0){
+        encrypted_len = (encrypted_len / 16 + 1) * 16;
+    }
+    
+    //Combine the sending plain text
+    //Move the Z into the plain_text_buffer
+    memset(plain_text_buffer, 0, sizeof(plain_text_buffer));
+    for(int i = 0; i < 8: ++i){
+        plain_text_buffer[i] = plaintext[1 + i];
+    }
+    //Move the string buffer into the plain_text_buffer
+    for(int i = 0; i < len; ++i){
+        plain_text_buffer[i+7] = string_buffer[i];
+    }
+
+    //This will encrypt the plain text by sgementing the text into different segement of 16 and encrypt them one by one
+    memset(cipher_text_buffer, 0, sizeof(cipher_string_buffer));
+    for(int i = 0; i < encrypted_len; i = i+16){
+        memset(plaintext, 0 , sizeof(plaintext));
+        memset(ciphertext, 0, sizeof(ciphertext));
+        for(int j = 0; j < 16; ++j){
+            plaintext[j] = plain_text_buffer[i + j];
+        }
+        encrypt_sym(plaintext, AES_SIZE, GLOBAL_KEY, ciphertext);
+        for(int j = 0; j < 16; ++j){
+            cipher_text_buffer[i+j] = ciphertext[j];
+        }
+    }
+    //Move the cipher text into the transmit_buffer and reday for transfer
     memset(transmit_buffer, 0, sizeof(transmit_buffer));//DO WE NEED THIS?
-    send_packet_and_ack(len, transmit_buffer);
+    full_message* send_packet = (full_message*)transmit_buffer;
+    memcpy(send_packet->param, cipher_string_buffer, sizeof(cipher_string_buffer));
+    send_packet_and_ack(encrypted_len, transmit_buffer);
 }
 
 /*********************************** MAIN *************************************/
