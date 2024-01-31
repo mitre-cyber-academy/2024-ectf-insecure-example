@@ -71,20 +71,6 @@ typedef struct{
 } full_message;
 
 
-
-// typedef struct {
-//     uint32_t component_id;
-// } validate_message;
-
-// typedef struct {
-//     uint32_t component_id;
-// } scan_message;
-
-// // Data type for receiving a boot message. NEEDS REVIEW, UNSURE HOW TO STRUCT
-// typedef struct {
-//     uint32_t number_id;
-// } boot_message;
-
 /********************************* FUNCTION DECLARATIONS **********************************/
 // Core function definitions
 void component_process_cmd(void);
@@ -234,9 +220,7 @@ void process_attest() {
                 ATTESTATION_LOC, ATTESTATION_DATE, ATTESTATION_CUSTOMER) + 1;
     
     uint8_t encrypted_len = 8 + len + 1;
-    // if(decrypted_len % 16 != 0){
-    //     encrypted_len = (decrypted_len / 16 + 1) * 16;
-    // }
+
     //Move the size of the string into the start of the message
     plain_text_buffer[0] = encrypted_len;
     //Combine the sending plain text
@@ -253,19 +237,6 @@ void process_attest() {
     //This will encrypt the plain text by sgementing the text into different segement of 16 and encrypt them one by one
     memset(cipher_text_buffer, 0, sizeof(cipher_string_buffer));
 
-    //We don't need to use this, I'll keep this later in case we need to use it
-    // for(int i = 0; i < encrypted_len; i = i+16){
-    //     memset(plaintext, 0 , sizeof(plaintext));
-    //     memset(ciphertext, 0, sizeof(ciphertext));
-    //     for(int j = 0; j < 16; ++j){
-    //         plaintext[j] = plain_text_buffer[i + j];
-    //     }
-    //     encrypt_sym(plaintext, AES_SIZE, GLOBAL_KEY, ciphertext);
-    //     for(int j = 0; j < 16; ++j){
-    //         cipher_text_buffer[i+j] = ciphertext[j];
-    //     }
-    // }
-
     //Encrypt the message out
     encrypt_sym(plain_text_buffer, sizeof(plain_text_buffer), GLOBAL_KEY, cipher_text_buffer);
     //Move the cipher text into the transmit_buffer and reday for transfer
@@ -275,36 +246,6 @@ void process_attest() {
     send_packet_and_ack(sizeof(full_message), transmit_buffer);
 }
 
-//This function could be used later for the secure send and secure receive
-// void process_validate_and_boot() {
-
-//     //This function is not completed, we need encryption and decryption stuff for every buffer transmiited and recieved. 
-
-//     // The AP requested a validation. Respond with the Component ID
-//     validate_message* packet = (validate_message*) transmit_buffer;
-//     packet->component_id = COMPONENT_ID;
-//     send_packet_and_ack(sizeof(validate_message), transmit_buffer);
-//     memset(transmit_buffer, 0, MAX_I2C_MESSAGE_LEN);//Do we need to do this? There are no such thing in the original codes
-//     // After sending the validation check back to AP, the component will wait for 0.3 seconds for responds from AP.
-//     // If it hears nothing, abort the process.
-//     memset(receive_buffer, 0, MAX_I2C_MESSAGE_LEN); 
-//     if(timed_wait_and_receive_packet(receive_buffer) > 0){
-//             message* command = (message*) receive_buffer;
-//             if(command->opcode == COMPONENT_CMD_BOOT){
-//                 // It will sends the confirm boot message back with the y.
-//                 boot_message* packet = (boot_message*) transmit_buffer;
-//                 packet->number_id = COMPONENT_BOOT_MSG;
-//                 send_packet_and_ack(sizeof(boot_message), transmit_buffer);
-//                 boot();
-//             }
-//             else{
-//                 print_error("Didn't hear boot command from AP, boot aborted");
-//             }
-//     }
-//     else{
-//         print_error("Didn't hear from the AP, boot aborted.");
-//     }
-// }
 
 /*********************************** MAIN *************************************/
 
