@@ -55,27 +55,23 @@
 /******************************** TYPE DEFINITIONS ********************************/
 // Commands received by Component using 32 bit integer
 typedef enum {
-    COMPONENT_CMD_NONE,
-    COMPONENT_CMD_SCAN,
-    COMPONENT_CMD_VALIDATE,
-    COMPONENT_CMD_BOOT,
-    COMPONENT_CMD_ATTEST
+    uint8_t COMPONENT_CMD_NONE,
+    uint8_t COMPONENT_CMD_SCAN,
+    uint8_t COMPONENT_CMD_VALIDATE,
+    uint8_t COMPONENT_CMD_BOOT,
+    uint8_t COMPONENT_CMD_ATTEST,
 } component_cmd_t;
 
 /******************************** TYPE DEFINITIONS ********************************/
 // Data structure for receiving messages from the AP
 typedef struct {
-    //uint8_t opcode;
-    uint8_t params[MAX_I2C_MESSAGE_LEN-1];
-} command_message;
+    uint8_t params[AES_SIZE];
+} message;
 
-typedef struct {
-    uint32_t component_id;
-} validate_message;
+typedef struct{
+    uint8_t param[MAX_I2C_MESSAGE_LEN];
+} full_message;
 
-typedef struct {
-    uint32_t component_id;
-} scan_message;
 
 /********************************* FUNCTION DECLARATIONS **********************************/
 // Core function definitions
@@ -89,6 +85,11 @@ void process_attest(void);
 // Global varaibles
 uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
 uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
+uint8_t string_buffer[MAX_I2C_MESSAGE_LEN];
+uint8_t cipher_text_buffer[MAX_I2C_MESSAGE_LEN];
+uint8_t plain_text_buffer[MAX_I2C_MESSAGE_LEN];
+uint8_t plaintext[AES_SIZE];
+uint8_t ciphertext[AES_SIZE];
 
 /******************************* POST BOOT FUNCTIONALITY *********************************/
 /**
@@ -152,16 +153,15 @@ void boot() {
     #endif
 }
 
-// Handle a transaction from the AP
+// Handle a command from the AP
 void component_process_cmd() {
-    command_message* command = (command_message*) receive_buffer;
-    uint8_t plaintext[AES_SIZE];
+    message* command = (message*) receive_buffer;
+    memset(plaintext, 0, sizeof(plaintext));
     decrypt_sym(command->params, AES_SIZE, GLOBAL_KEY, plaintext);
-    //decrypt_sym(uint8_t *ciphertext, size_t len, uint8_t *key, uint8_t *plaintext)
 
     // Output to application processor dependent on command received
     switch (plaintext[0]) {
-    case COMPONENT_CMD_BOOT:
+    case COMPONENT_CMD_VALIDATE:
         process_boot();
         break;
     case COMPONENT_CMD_SCAN:
@@ -176,36 +176,77 @@ void component_process_cmd() {
     }
 }
 
+// This if for the functionality of Boot
 void process_boot() {
-    // The AP requested a boot. Set `component_boot` for the main loop and
-    // respond with the boot message
-    uint8_t len = strlen(COMPONENT_BOOT_MSG) + 1;
-    memcpy((void*)transmit_buffer, COMPONENT_BOOT_MSG, len);
-    send_packet_and_ack(len, transmit_buffer);
-    // Call the boot function
+    // The AP requested a boot. 
+    //Validate the Component ID
+    for(int i = 0; i < 4; ++i){
+        if(plaintext[1+i] != (uint8_t)((COMPONENT_ID >> 8*(3-i)) & 0xFF)){
+            print_error("The Component ID checks failed at the component sided");
+            return;
+        }
+    }
+    //Validation passed
+    //Starts Boot
     boot();
+    //Send Boot comfirmation message back to AP
+    plaintext[0] = COMPONENT_CMD_BOOT;
+    memset(transmit_buffer, 0, sizeof(transmit_buffer));//DO WE NEED THIS?
+    message * send_packet = (message*) transmit_buffer;
+    encrypt_sym(plaintext, AES_SIZE, GLOBAL_KEY, send_packet->params);
+    // memcpy((void*)transmit_buffer, ciphertext, AES_SIZE);
+    send_packet_and_ack(sizeof(message), transmit_buffer);
 }
 
 void process_scan() {
     // The AP requested a scan. Respond with the Component ID
-    scan_message* packet = (scan_message*) transmit_buffer;
-    packet->component_id = COMPONENT_ID;
-    send_packet_and_ack(sizeof(scan_message), transmit_buffer);
-}
-
-void process_validate() {
-    // The AP requested a validation. Respond with the Component ID
-    validate_message* packet = (validate_message*) transmit_buffer;
-    packet->component_id = COMPONENT_ID;
-    send_packet_and_ack(sizeof(validate_message), transmit_buffer);
+    memset(transmit_buffer, 0, sizeof(transmit_buffer));//DO WE NEED THIS?
+    message* packet = (message*) transmit_buffer;
+    for(int i = 0; i < 4; ++i){
+        packet->params[i] = (uint8_t)((COMPONENT_ID >> 8*(3-i)) & 0xFF);
+    }
+    send_packet_and_ack(sizeof(message), transmit_buffer);
 }
 
 void process_attest() {
     // The AP requested attestation. Respond with the attestation data
-    uint8_t len = sprintf((char*)transmit_buffer, "LOC>%s\nDATE>%s\nCUST>%s\n",
+    //First move the Z one byte ahead for the respond
+    for(int i = 0; i < 8; ++i){
+        plaintext[0+i] = plaintext[1+i];
+    }
+
+    // Start to move atttestation data into the transmit_buffer
+    memset(string_buffer, 0, sizeof(string_buffer));
+    uint8_t len = sprintf((char*)string_buffer, "LOC>%s\nDATE>%s\nCUST>%s\n",
                 ATTESTATION_LOC, ATTESTATION_DATE, ATTESTATION_CUSTOMER) + 1;
-    send_packet_and_ack(len, transmit_buffer);
+    
+    uint8_t encrypted_len = 8 + len + 1;
+
+    //Move the size of the string into the start of the message
+    plain_text_buffer[0] = encrypted_len;
+    //Combine the sending plain text
+    //Move the Z into the plain_text_buffer
+    memset(plain_text_buffer, 0, sizeof(plain_text_buffer));
+    for(int i = 1; i < 9: ++i){
+        plain_text_buffer[i] = plaintext[i];
+    }
+    //Move the string buffer into the plain_text_buffer
+    for(int i = 0; i < len; ++i){
+        plain_text_buffer[i+8] = string_buffer[i];
+    }
+
+    //This will encrypt the plain text by sgementing the text into different segement of 16 and encrypt them one by one
+    memset(cipher_text_buffer, 0, sizeof(cipher_string_buffer));
+
+    //Encrypt the message out
+    encrypt_sym(plain_text_buffer, sizeof(plain_text_buffer), GLOBAL_KEY, cipher_text_buffer);
+    //Move the cipher text into the transmit_buffer and reday for transfer
+    memset(transmit_buffer, 0, sizeof(transmit_buffer));//DO WE NEED THIS?
+    full_message* send_packet = (full_message*)transmit_buffer;
+    memcpy(send_packet->param, cipher_text_buffer, sizeof(cipher_text_buffer));
+    send_packet_and_ack(sizeof(full_message), transmit_buffer);
 }
+
 
 /*********************************** MAIN *************************************/
 
