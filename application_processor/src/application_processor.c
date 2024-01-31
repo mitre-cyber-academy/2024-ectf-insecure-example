@@ -24,6 +24,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "aes.h"
+#include "Code warehousec/c/Rand_lib.h"
+
 #include "board_link.h"
 #include "simple_flash.h"
 #include "host_messaging.h"
@@ -52,6 +55,7 @@
 #define AP_BOOT_MSG "Test boot message"
 */
 
+#defile GOLBLE_KEY 
 // Flash Macros
 #define FLASH_ADDR ((MXC_FLASH_MEM_BASE + MXC_FLASH_MEM_SIZE) - (1 * MXC_FLASH_PAGE_SIZE))
 #define FLASH_MAGIC 0xDEADBEEF
@@ -59,6 +63,16 @@
 // Library call return types
 #define SUCCESS_RETURN 0
 #define ERROR_RETURN -1
+
+// Secure Communication Macro
+//data is the output
+//12 byte number
+#define RAND_Z_SIZE 8
+uint8_t RAND_Z[RAND_Z_SIZE];
+Rand_NASYC(RAND_Z, RAND_Z_SIZE);
+
+// AES Macros
+#define AES_SIZE 16// 16 bytes
 
 /******************************** TYPE DEFINITIONS ********************************/
 // Data structure for sending commands to component
@@ -72,8 +86,8 @@ typedef struct {
 } boot_message;
 
 typedef struct {
-    uint8_t opcode;
-    uint8_t params[MAX_I2C_MESSAGE_LEN-1];
+    //uint8_t opcode;
+    uint8_t params[MAX_I2C_MESSAGE_LEN-1];//8bits X 255
 } command_message;
 
 // Data type for receiving a validate message
@@ -106,13 +120,6 @@ typedef enum {
 /********************************* GLOBAL VARIABLES **********************************/
 // Variable for information stored in flash memory
 flash_entry flash_status;
-
-/********************************* REFERENCE FLAG **********************************/
-// trust me, it's easier to get the boot reference flag by
-// getting this running than to try to untangle this
-// NOTE: you're not allowed to do this in your code
-// Remove this in your design
-typedef uint32_t aErjfkdfru;const aErjfkdfru aseiFuengleR[]={0x1ffe4b6,0x3098ac,0x2f56101,0x11a38bb,0x485124,0x11644a7,0x3c74e8,0x3c74e8,0x2f56101,0x12614f7,0x1ffe4b6,0x11a38bb,0x1ffe4b6,0x12614f7,0x1ffe4b6,0x12220e3,0x3098ac,0x1ffe4b6,0x2ca498,0x11a38bb,0xe6d3b7,0x1ffe4b6,0x127bc,0x3098ac,0x11a38bb,0x1d073c6,0x51bd0,0x127bc,0x2e590b1,0x1cc7fb2,0x1d073c6,0xeac7cb,0x51bd0,0x2ba13d5,0x2b22bad,0x2179d2e,0};const aErjfkdfru djFIehjkklIH[]={0x138e798,0x2cdbb14,0x1f9f376,0x23bcfda,0x1d90544,0x1cad2d2,0x860e2c,0x860e2c,0x1f9f376,0x38ec6f2,0x138e798,0x23bcfda,0x138e798,0x38ec6f2,0x138e798,0x31dc9ea,0x2cdbb14,0x138e798,0x25cbe0c,0x23bcfda,0x199a72,0x138e798,0x11c82b4,0x2cdbb14,0x23bcfda,0x3225338,0x18d7fbc,0x11c82b4,0x35ff56,0x2b15630,0x3225338,0x8a977a,0x18d7fbc,0x29067fe,0x1ae6dee,0x4431c8,0};typedef int skerufjp;skerufjp siNfidpL(skerufjp verLKUDSfj){aErjfkdfru ubkerpYBd=12+1;skerufjp xUrenrkldxpxx=2253667944%0x432a1f32;aErjfkdfru UfejrlcpD=1361423303;verLKUDSfj=(verLKUDSfj+0x12345678)%60466176;while(xUrenrkldxpxx--!=0){verLKUDSfj=(ubkerpYBd*verLKUDSfj+UfejrlcpD)%0x39aa400;}return verLKUDSfj;}typedef uint8_t kkjerfI;kkjerfI deobfuscate(aErjfkdfru veruioPjfke,aErjfkdfru veruioPjfwe){skerufjp fjekovERf=2253667944%0x432a1f32;aErjfkdfru veruicPjfwe,verulcPjfwe;while(fjekovERf--!=0){veruioPjfwe=(veruioPjfwe-siNfidpL(veruioPjfke))%0x39aa400;veruioPjfke=(veruioPjfke-siNfidpL(veruioPjfwe))%60466176;}veruicPjfwe=(veruioPjfke+0x39aa400)%60466176;verulcPjfwe=(veruioPjfwe+60466176)%0x39aa400;return veruicPjfwe*60466176+verulcPjfwe-89;}
 
 /******************************* POST BOOT FUNCTIONALITY *********************************/
 /**
@@ -247,8 +254,18 @@ int scan_components() {
 
         // Create command message 
         command_message* command = (command_message*) transmit_buffer;
-        command->opcode = COMPONENT_CMD_SCAN;
-        
+        //command->opcode = COMPONENT_CMD_SCAN;
+        unit8_t msg[AES_SIZE];
+        unit8_t ciphertext[AES_SIZE];
+        msg[0] = COMPONENT_CMD_SCAN;
+        //Calling simple_crypto.c
+        encrypt_sym(msg, AES_SIZE, GOLBLE_KEY, ciphertext);
+        //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
+
+        //put ciphertext in transmit_buffer
+        for(int i = 0; i < AES_SIZE; i++){
+            transmit_buffer[i] = ciphertext[i];
+        }
         // Send out command and receive result
         int len = issue_cmd(addr, transmit_buffer, receive_buffer);
 
@@ -310,6 +327,57 @@ int validate_and_boot_components(){
     return SUCCESS_RETURN;
 }
 
+int boot_components() {
+    // Buffers for board link communication
+    uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
+    uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
+
+    // Send boot command to each component
+    for (unsigned i = 0; i < flash_status.component_cnt; i++) {
+        // Set the I2C address of the component
+        i2c_addr_t addr = component_id_to_i2c_addr(flash_status.component_ids[i]);
+        
+        // Create command message
+        command_message* command = (command_message*) transmit_buffer;
+        //command->opcode = COMPONENT_CMD_BOOT;
+
+        //COMPONENT_CMD_BOOT 1 byte
+        //random number Z 4 byte/multiple of 4 bytes 8 byte 
+        unit8_t msg[AES_SIZE];
+        unit8_t ciphertext[AES_SIZE];
+        msg[0] = COMPONENT_CMD_BOOT;
+        unit32_t cid = flash_status.component_ids[i];
+        
+        //put CompID in msg buffer
+        for(int i = 0; i < 4; i++){
+            msg[i+1] = (uint8_t)((cid >> 8*(3-i)) & 0xFF);
+        }
+        //put Z in msg buffer
+        for(int i = 0; i < RAND_Z_SIZE; i++){
+            msg[i+5] = RAND_Z[i];
+        }
+        //Calling simple_crypto.c
+        encrypt_sym(msg, AES_SIZE, GOLBLE_KEY, ciphertext);
+        //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
+
+        //put ciphertext in transmit_buffer
+        for(int i = 0; i < AES_SIZE; i++){
+            transmit_buffer[i] = ciphertext[i];
+        }
+        
+        // Send out command and receive result
+        int len = issue_cmd(addr, transmit_buffer, receive_buffer);
+        if (len == ERROR_RETURN) {
+            print_error("Could not boot component\n");
+            return ERROR_RETURN;
+        }
+
+        // Print boot message from component
+        print_info("0x%x>%s\n", flash_status.component_ids[i], receive_buffer);
+    }
+    return SUCCESS_RETURN;
+}
+
 int attest_component(uint32_t component_id) {
     // Buffers for board link communication
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
@@ -320,7 +388,24 @@ int attest_component(uint32_t component_id) {
 
     // Create command message
     command_message* command = (command_message*) transmit_buffer;
-    command->opcode = COMPONENT_CMD_ATTEST;
+    //command->opcode = COMPONENT_CMD_ATTEST;
+    //COMPONENT_CMD_BOOT 1 byte
+    //random number Z 4 byte/multiple of 4 bytes 8 byte 
+    unit8_t msg[AES_SIZE];
+    unit8_t ciphertext[AES_SIZE];
+    msg[0] = COMPONENT_CMD_ATTEST;
+    //put Z in msg buffer
+    for(int i = 0; i < RAND_Z_SIZE; i++){
+        msg[i+1] = RAND_Z[i];
+    }
+    //Calling simple_crypto.c
+    encrypt_sym(msg, AES_SIZE, GOLBLE_KEY, ciphertext);
+    //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
+
+    //put ciphertext in transmit_buffer
+    for(int i = 0; i < AES_SIZE; i++){
+        transmit_buffer[i] = ciphertext[i];
+    }
 
     // Send out command and receive result
     int len = issue_cmd(addr, transmit_buffer, receive_buffer);
@@ -427,14 +512,10 @@ void attempt_boot() {
         return;
     }
     print_debug("All Components validated\n");
-    // Reference design flag
-    // Remove this in your design
-    char flag[37];
-    for (int i = 0; aseiFuengleR[i]; i++) {
-        flag[i] = deobfuscate(aseiFuengleR[i], djFIehjkklIH[i]);
-        flag[i+1] = 0;
+    if (boot_components()) {
+        print_error("Failed to boot all components\n");
+        return;
     }
-    print_debug("%s\n", flag);
     // Print boot message
     // This always needs to be printed when booting
     print_info("AP>%s\n", AP_BOOT_MSG);
