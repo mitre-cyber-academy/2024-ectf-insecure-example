@@ -30,6 +30,8 @@
 #include "board_link.h"
 #include "simple_flash.h"
 #include "host_messaging.h"
+#include "key_exchange.h"
+
 #ifdef CRYPTO_EXAMPLE
 #include "simple_crypto.h"
 #endif
@@ -563,8 +565,8 @@ int main() {
     init();
     Rand_NASYC(RAND_Z, RAND_Z_SIZE);
     if(synthesized == 0){
-        synthesis_key();
-        GLOBAL_KEY;
+        key_sync(GLOBAL_KEY, flash_status.component_cnt, 
+        flash_status.component_ids[0], flash_status.component_ids[1]);
     }
     // Print the component IDs to be helpful
     // Your design does not need to do this
