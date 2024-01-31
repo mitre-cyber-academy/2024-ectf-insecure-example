@@ -46,6 +46,9 @@
 #define ATTESTATION_DATE "08/08/08"
 #define ATTESTATION_CUSTOMER "Fritz"
 */
+//AES
+#define AES_SIZE 16// 16 bytes
+#define GLOBAL_KEY
 
 /******************************** TYPE DEFINITIONS ********************************/
 // Commands received by Component using 32 bit integer
@@ -60,7 +63,7 @@ typedef enum {
 /******************************** TYPE DEFINITIONS ********************************/
 // Data structure for receiving messages from the AP
 typedef struct {
-    uint8_t opcode;
+    //uint8_t opcode;
     uint8_t params[MAX_I2C_MESSAGE_LEN-1];
 } command_message;
 
@@ -155,7 +158,11 @@ void boot() {
 // Handle a transaction from the AP
 void component_process_cmd() {
     command_message* command = (command_message*) receive_buffer;
+    uint8_t plaintext[AES_SIZE];
+    decrypt_sym(command->params, AES_SIZE, GLOBAL_KEY, plaintext);
+    //decrypt_sym(uint8_t *ciphertext, size_t len, uint8_t *key, uint8_t *plaintext)
 
+    
     // Output to application processor dependent on command received
     switch (command->opcode) {
     /** We will not use this because the component should only boot
