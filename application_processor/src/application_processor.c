@@ -317,6 +317,11 @@ int validate_and_boot_components(){
         uint8_t response_command = plaintext[0];
         uint32_t response_cid;
 
+        //compare cmd code
+        if(response_command != COMPONENT_CMD_BOOT){
+            print_error("Invalid command message from component")
+        }
+
         //load cid
         for(int i = 0; i < 4; i++){
             response_cid = plaintext[i+1] << (8*(3-i));
@@ -364,7 +369,7 @@ int attest_component(uint32_t component_id) {
     }
     //Calling simple_crypto.c
     encrypt_sym(msg, AES_SIZE, GLOBAL_KEY, ciphertext);
-    
+
     //put ciphertext in transmit_buffer
     for(int i = 0; i < AES_SIZE; i++){
         transmit_buffer[i] = ciphertext[i];
