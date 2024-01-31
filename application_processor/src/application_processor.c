@@ -108,7 +108,7 @@ typedef enum {
     uint8_t COMPONENT_CMD_SCAN,
     uint8_t COMPONENT_CMD_VALIDATE,
     uint8_t COMPONENT_CMD_BOOT,
-    uint8_t COMPONENT_CMD_ATTEST
+    uint8_t COMPONENT_CMD_ATTEST,
 } component_cmd_t;
 
 /********************************* GLOBAL VARIABLES **********************************/
@@ -117,6 +117,7 @@ flash_entry flash_status;
 
 /******************************* POST BOOT FUNCTIONALITY *********************************/
 /**
+
  * @brief Secure Send 
  * 
  * @param address: i2c_addr_t, I2C address of recipient
@@ -127,7 +128,7 @@ flash_entry flash_status;
  * This function must be implemented by your team to align with the security requirements.
 
 */
-int secure_send(uint8_t address, uint8_t* buffer, uint8_t len) {
+int secure_send(i2c_addr_t address, uint8_t* buffer, uint8_t len) {
     return send_packet(address, len, buffer);
 }
 
@@ -157,6 +158,12 @@ int secure_receive(i2c_addr_t address, uint8_t* buffer) {
  * for the current AP. This functionality is utilized in POST_BOOT functionality.
  * This function must be implemented by your team.
 */
+int secure_send_and_recieve(uint8_t address, uint8_t* transmit_buffer,uint8_t receive_buffer, uint8_t len){
+    send_packet()
+    poll_and_receive_packet_custom()
+    send_packet()
+    poll_and_receive_packet()
+}
 int get_provisioned_ids(uint32_t* buffer) {
     memcpy(buffer, flash_status.component_ids, flash_status.component_cnt * sizeof(uint32_t));
     return flash_status.component_cnt;
@@ -223,6 +230,7 @@ int issue_cmd_custom(i2c_addr_t addr, uint8_t* transmit, uint8_t* receive) {
     if (len == ERROR_RETURN) {
         return ERROR_RETURN;
     }
+    return len
 }
 
 /******************************** COMPONENT COMMS ********************************/
@@ -393,20 +401,18 @@ int attest_component(uint32_t component_id) {
         return ERROR_RETURN;
     }
     int aes_size_response;
-    if(len%16){
-        aes_size_response = (len-len%16) + 16
-    }
-    else{
-        aes_size_response = len
-    }
+    uint8_t response_len;
 
     // decrypt attestation data
     full_message* response = (full_message*) receive_buffer
-    decrypt_sym(response->params, aes_size_response, GLOBAL_KEY, plaintext);
+    decrypt_sym(response->params, MAX_I2C_MESSAGE_LEN, GLOBAL_KEY, plaintext);
+
+    //store length of message
+    response_len = plaintext[0];
 
     //compare Z value
     for(int i = 0; i < RAND_Z_SIZE; i++){
-        if (plaintext[i] != RAND_Z[i]){
+        if (plaintext[i+1] != RAND_Z[i]){
             print_error("Random number provided is invalid");
             return ERROR_RETURN;
         }
@@ -414,7 +420,7 @@ int attest_component(uint32_t component_id) {
 
     //store attest data
     for(int i = 0; i < len; i++){
-        attest_data[i] = plaintext[i+RAND_Z_SIZE]
+        attest_data[i] = plaintext[i+RAND_Z_SIZE+1]
     }
 
     // Print out attestation data 
