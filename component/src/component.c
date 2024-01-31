@@ -269,35 +269,37 @@ void process_attest() {
                 ATTESTATION_LOC, ATTESTATION_DATE, ATTESTATION_CUSTOMER) + 1;
     
     uint8_t encrypted_len = 8 + len + 1;
-    string_buffer[len] = encrypted_len;
-    if(encrypted_len % 16 != 0){
-        encrypted_len = (encrypted_len / 16 + 1) * 16;
-    }
-    
+    // if(decrypted_len % 16 != 0){
+    //     encrypted_len = (decrypted_len / 16 + 1) * 16;
+    // }
+    //Move the size of the string into the start of the message
+    plain_text_buffer[0] = encrypted_len;
     //Combine the sending plain text
     //Move the Z into the plain_text_buffer
     memset(plain_text_buffer, 0, sizeof(plain_text_buffer));
-    for(int i = 0; i < 8: ++i){
-        plain_text_buffer[i] = plaintext[1 + i];
+    for(int i = 1; i < 9: ++i){
+        plain_text_buffer[i] = plaintext[i];
     }
     //Move the string buffer into the plain_text_buffer
     for(int i = 0; i < len; ++i){
-        plain_text_buffer[i+7] = string_buffer[i];
+        plain_text_buffer[i+8] = string_buffer[i];
     }
 
     //This will encrypt the plain text by sgementing the text into different segement of 16 and encrypt them one by one
     memset(cipher_text_buffer, 0, sizeof(cipher_string_buffer));
-    for(int i = 0; i < encrypted_len; i = i+16){
-        memset(plaintext, 0 , sizeof(plaintext));
-        memset(ciphertext, 0, sizeof(ciphertext));
-        for(int j = 0; j < 16; ++j){
-            plaintext[j] = plain_text_buffer[i + j];
-        }
-        encrypt_sym(plaintext, AES_SIZE, GLOBAL_KEY, ciphertext);
-        for(int j = 0; j < 16; ++j){
-            cipher_text_buffer[i+j] = ciphertext[j];
-        }
-    }
+    //We don't need to use this
+    // for(int i = 0; i < encrypted_len; i = i+16){
+    //     memset(plaintext, 0 , sizeof(plaintext));
+    //     memset(ciphertext, 0, sizeof(ciphertext));
+    //     for(int j = 0; j < 16; ++j){
+    //         plaintext[j] = plain_text_buffer[i + j];
+    //     }
+    //     encrypt_sym(plaintext, AES_SIZE, GLOBAL_KEY, ciphertext);
+    //     for(int j = 0; j < 16; ++j){
+    //         cipher_text_buffer[i+j] = ciphertext[j];
+    //     }
+    // }
+    encrypt_sym(plain_text_buffer, encrypted_len, GLOBAL_KEY, cipher_text_buffer);
     //Move the cipher text into the transmit_buffer and reday for transfer
     memset(transmit_buffer, 0, sizeof(transmit_buffer));//DO WE NEED THIS?
     full_message* send_packet = (full_message*)transmit_buffer;
