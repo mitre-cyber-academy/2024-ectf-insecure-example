@@ -89,7 +89,6 @@ typedef struct {
     uint8_t param[MAX_I2C_MESSAGE_LEN]
 } full_message;
 
-
 // Data type for receiving a scan message
 typedef struct {
     uint32_t component_id;
@@ -158,12 +157,6 @@ int secure_receive(i2c_addr_t address, uint8_t* buffer) {
  * for the current AP. This functionality is utilized in POST_BOOT functionality.
  * This function must be implemented by your team.
 */
-int secure_send_and_recieve(uint8_t address, uint8_t* transmit_buffer,uint8_t receive_buffer, uint8_t len){
-    send_packet()
-    poll_and_receive_packet_custom()
-    send_packet()
-    poll_and_receive_packet()
-}
 int get_provisioned_ids(uint32_t* buffer) {
     memcpy(buffer, flash_status.component_ids, flash_status.component_cnt * sizeof(uint32_t));
     return flash_status.component_cnt;
@@ -204,29 +197,13 @@ void init() {
 // Send a command to a component and receive the result
 int issue_cmd(i2c_addr_t addr, uint8_t* transmit, uint8_t* receive) {
     // Send message
-    int result = send_packet(addr, sizeof(uint8_t), transmit);
-    if (result == ERROR_RETURN) {
-        return ERROR_RETURN;
-    }
-    
-    // Receive message
-    int len = poll_and_receive_packet(addr, receive);
-    if (len == ERROR_RETURN) {
-        return ERROR_RETURN;
-    }
-    return len;
-}
-
-//Custom issue cmd function for validate&boot, might be able to combine them all
-int issue_cmd_custom(i2c_addr_t addr, uint8_t* transmit, uint8_t* receive) {
-    // Send message
     int result = send_packet(addr, sizeof(uint8_t), transmit); // maybe change the length of packet to 16?
     if (result == ERROR_RETURN) {
         return ERROR_RETURN;
     }
 
     // Receive message
-    int len = poll_and_receive_packet_custom(addr, receive); // Use secure custom function
+    int len = poll_and_receive_packet(addr, receive); // Use secure custom function
     if (len == ERROR_RETURN) {
         return ERROR_RETURN;
     }
@@ -323,7 +300,7 @@ int validate_and_boot_components(){
         }
 
         // Send out command and receive result
-        int len = issue_cmd_custom(addr, transmit_buffer, receive_buffer);
+        int len = issue_cmd(addr, transmit_buffer, receive_buffer);
         if (len == ERROR_RETURN) {
             print_error("Could not validate or boot component\n");
             return ERROR_RETURN;
@@ -373,7 +350,7 @@ int attest_component(uint32_t component_id) {
 
     // Create command message
     message* command = (message*) transmit_buffer;
-    //command->opcode = COMPONENT_CMD_ATTEST;
+
     //COMPONENT_CMD_BOOT 1 byte
     //random number Z 4 byte/multiple of 4 bytes 8 byte 
     unit8_t msg[AES_SIZE];
@@ -387,15 +364,14 @@ int attest_component(uint32_t component_id) {
     }
     //Calling simple_crypto.c
     encrypt_sym(msg, AES_SIZE, GLOBAL_KEY, ciphertext);
-    //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
-
+    
     //put ciphertext in transmit_buffer
     for(int i = 0; i < AES_SIZE; i++){
         transmit_buffer[i] = ciphertext[i];
     }
 
     // Send out command and receive result
-    int len = issue_cmd_custom(addr, transmit_buffer, receive_buffer);
+    int len = issue_cmd(addr, transmit_buffer, receive_buffer);
     if (len == ERROR_RETURN) {
         print_error("Could not attest\n");
         return ERROR_RETURN;

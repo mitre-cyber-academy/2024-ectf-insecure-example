@@ -78,36 +78,6 @@ int send_packet(i2c_addr_t address, uint8_t len, uint8_t* packet) {
 int poll_and_receive_packet(i2c_addr_t address, uint8_t* packet) {
 
     int result = SUCCESS_RETURN;
-    while (true) {
-        result = i2c_simple_read_transmit_done(address);
-        if (result < SUCCESS_RETURN) {
-            return ERROR_RETURN;
-        }
-        else if (result == SUCCESS_RETURN) {
-            break;
-        }
-        MXC_Delay(50);
-    }
-
-    int len = i2c_simple_read_transmit_len(address);
-    if (len < SUCCESS_RETURN) {
-        return ERROR_RETURN;
-    }
-    result = i2c_simple_read_data_generic(address, TRANSMIT, (uint8_t)len, packet);
-    if (result < SUCCESS_RETURN) {
-        return ERROR_RETURN;
-    }
-    result = i2c_simple_write_transmit_done(address, true);
-    if (result < SUCCESS_RETURN) {
-        return ERROR_RETURN;
-    }
-
-    return len;
-}
-
-int poll_and_receive_packet_custom(i2c_addr_t address, uint8_t* packet) {
-
-    int result = SUCCESS_RETURN;
     int time_fail = -1
     for(int i = 0; i < 3000000; i++){
         result = i2c_simple_read_transmit_done(address);
