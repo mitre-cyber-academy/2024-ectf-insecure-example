@@ -45,11 +45,6 @@
 
 /********************************* Global Variables **********************************/
 
-<<<<<<< HEAD
-=======
-
-#define GLOBAL_KEY 
->>>>>>> zhanhao
 // Flash Macros
 #define FLASH_ADDR ((MXC_FLASH_MEM_BASE + MXC_FLASH_MEM_SIZE) - (1 * MXC_FLASH_PAGE_SIZE))
 #define FLASH_MAGIC 0xDEADBEEF
@@ -236,10 +231,7 @@ int scan_components() {
         msg[0] = COMPONENT_CMD_SCAN;
         //Calling simple_crypto.c
         encrypt_sym(msg, AES_SIZE, GLOBAL_KEY, ciphertext);
-<<<<<<< HEAD
         encrypt_sym(msg, AES_SIZE, GLOBAL_KEY, ciphertext);
-=======
->>>>>>> zhanhao
         //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
 
         //put ciphertext in transmit_buffer
@@ -293,10 +285,7 @@ int validate_and_boot_components(){
 
         //Calling simple_crypto.c
         encrypt_sym(msg, AES_SIZE, GLOBAL_KEY, ciphertext);
-<<<<<<< HEAD
         encrypt_sym(msg, AES_SIZE, GLOBAL_KEY, ciphertext);
-=======
->>>>>>> zhanhao
         //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
 
         //put ciphertext in transmit_buffer
@@ -374,10 +363,6 @@ int attest_component(uint32_t component_id) {
     }
     //Calling simple_crypto.c
     encrypt_sym(msg, AES_SIZE, GLOBAL_KEY, ciphertext);
-<<<<<<< HEAD
-=======
-    //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
->>>>>>> zhanhao
 
     //put ciphertext in transmit_buffer
     for(int i = 0; i < AES_SIZE; i++){
