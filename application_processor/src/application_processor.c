@@ -25,7 +25,7 @@
 #include <string.h>
 
 #include "aes.h"
-#include "Code warehousec/c/Rand_lib.h"
+#include "Code_warehouse/c/Rand_lib.h"
 
 #include "board_link.h"
 #include "simple_flash.h"
@@ -74,6 +74,8 @@ Rand_NASYC(RAND_Z, RAND_Z_SIZE);
 // AES Macros
 #define AES_SIZE 16// 16 bytes
 
+
+
 /******************************** TYPE DEFINITIONS ********************************/
 // Data structure for sending commands to component
 // Params allows for up to MAX_I2C_MESSAGE_LEN - 1 bytes to be send
@@ -102,7 +104,7 @@ typedef struct {
 } flash_entry;
 
 // Datatype for commands sent to components
-typedef enum {
+typedef enum : uint8_t{
     COMPONENT_CMD_NONE,
     COMPONENT_CMD_SCAN,
     COMPONENT_CMD_VALIDATE,

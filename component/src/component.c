@@ -21,6 +21,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "Code_warehouse/c/Rand_lib.h"
+
 #include "simple_i2c_peripheral.h"
 #include "board_link.h"
 
