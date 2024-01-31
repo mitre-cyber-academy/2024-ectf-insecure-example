@@ -301,7 +301,7 @@ void process_attest() {
     //Move the cipher text into the transmit_buffer and reday for transfer
     memset(transmit_buffer, 0, sizeof(transmit_buffer));//DO WE NEED THIS?
     full_message* send_packet = (full_message*)transmit_buffer;
-    memcpy(send_packet->param, cipher_string_buffer, sizeof(cipher_string_buffer));
+    memcpy(send_packet->param, cipher_text_buffer, sizeof(cipher_text_buffer));
     send_packet_and_ack(encrypted_len, transmit_buffer);
 }
 
