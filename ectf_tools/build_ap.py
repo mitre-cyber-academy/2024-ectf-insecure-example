@@ -23,10 +23,10 @@ def build_ap(
     design: Path,
     output_name,
     output_dir: Path,
-    pin,
-    token,
-    component_cnt,
-    component_ids,
+    pin, # this needs SHA 256 hash
+    token, # AES 128 
+    component_cnt, #how many compo 2
+    component_ids, 
     boot_message
 ):
     """

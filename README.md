@@ -1,4 +1,4 @@
-# UCI ECTF 2024 DESIGN
+
 
 
 ## Layout

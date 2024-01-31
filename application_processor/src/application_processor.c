@@ -43,17 +43,9 @@
 #include "ectf_params.h"
 #include "global_secrets.h"
 
-/********************************* CONSTANTS **********************************/
+/********************************* Global Variables **********************************/
+uint8_t synthesized=0; // when you do the command, check if the thing is synthesized yet or not, if not, synthesize the whole thing.
 
-// Passed in through ectf-params.h
-// Example of format of ectf-params.h shown here
-/*
-#define AP_PIN "123456"
-#define AP_TOKEN "0123456789abcdef"
-#define COMPONENT_IDS 0x11111124, 0x11111125
-#define COMPONENT_CNT 2
-#define AP_BOOT_MSG "Test boot message"
-*/
 
 #define GLOBAL_KEY 
 // Flash Macros
