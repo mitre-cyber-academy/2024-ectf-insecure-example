@@ -53,32 +53,37 @@
 /******************************** TYPE DEFINITIONS ********************************/
 // Commands received by Component using 32 bit integer
 typedef enum {
-    COMPONENT_CMD_NONE,
-    COMPONENT_CMD_SCAN,
-    COMPONENT_CMD_VALIDATE,
-    COMPONENT_CMD_BOOT,
-    COMPONENT_CMD_ATTEST
+    uint8_t COMPONENT_CMD_NONE,
+    uint8_t COMPONENT_CMD_SCAN,
+    uint8_t COMPONENT_CMD_VALIDATE,
+    uint8_t COMPONENT_CMD_BOOT,
+    uint8_t COMPONENT_CMD_ATTEST,
 } component_cmd_t;
 
 /******************************** TYPE DEFINITIONS ********************************/
 // Data structure for receiving messages from the AP
 typedef struct {
-    //uint8_t opcode;
-    uint8_t params[MAX_I2C_MESSAGE_LEN-1];
-} command_message;
+    uint8_t params[AES_SIZE];
+} message;
 
-typedef struct {
-    uint32_t component_id;
-} validate_message;
+typedef struct{
+    uint8_t param[MAX_I2C_MESSAGE_LEN];
+} full_message;
 
-typedef struct {
-    uint32_t component_id;
-} scan_message;
 
-// Data type for receiving a boot message. NEEDS REVIEW, UNSURE HOW TO STRUCT
-typedef struct {
-    uint32_t number_id;
-} boot_message;
+
+// typedef struct {
+//     uint32_t component_id;
+// } validate_message;
+
+// typedef struct {
+//     uint32_t component_id;
+// } scan_message;
+
+// // Data type for receiving a boot message. NEEDS REVIEW, UNSURE HOW TO STRUCT
+// typedef struct {
+//     uint32_t number_id;
+// } boot_message;
 
 /********************************* FUNCTION DECLARATIONS **********************************/
 // Core function definitions
@@ -92,6 +97,8 @@ void process_attest(void);
 // Global varaibles
 uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
 uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
+uint8_t string_buffer[MAX_I2C_MESSAGE_LEN];
+uint8_t plaintext[AES_SIZE];
 
 /******************************* POST BOOT FUNCTIONALITY *********************************/
 /**
@@ -157,26 +164,19 @@ void boot() {
 
 // Handle a transaction from the AP
 void component_process_cmd() {
-    command_message* command = (command_message*) receive_buffer;
-    uint8_t plaintext[AES_SIZE];
+    message* command = (message*) receive_buffer;
+    memset(plaintext, 0, sizeof(plaintext));
     decrypt_sym(command->params, AES_SIZE, GLOBAL_KEY, plaintext);
     //decrypt_sym(uint8_t *ciphertext, size_t len, uint8_t *key, uint8_t *plaintext)
 
     
     // Output to application processor dependent on command received
-    switch (command->opcode) {
-    /** We will not use this because the component should only boot
-        iff it recieves boot command from ap in a timely period, so the boot command
-        will be done within the process_validate function.
-    **/
-    // case COMPONENT_CMD_BOOT:
-    //     process_boot();
-    //     break;
+    switch (plaintext[0]) {
+    case COMPONENT_CMD_VALIDATE:
+        process_boot();
+        break;
     case COMPONENT_CMD_SCAN:
         process_scan();
-        break;
-    case COMPONENT_CMD_VALIDATE:
-        process_validate_and_boot();
         break;
     case COMPONENT_CMD_ATTEST:
         process_attest();
@@ -187,71 +187,86 @@ void component_process_cmd() {
     }
 }
 
-// We will not using this function
+// This if for the functionality of Boot
 void process_boot() {
-    // The AP requested a boot. Set `component_boot` for the main loop and
-    // respond with the boot message
-    uint8_t len = strlen(COMPONENT_BOOT_MSG) + 1;
-    memcpy((void*)transmit_buffer, COMPONENT_BOOT_MSG, len);
-    send_packet_and_ack(len, transmit_buffer);
-    // Call the boot function
+    // The AP requested a boot. 
+    //Validate the Component ID
+    for(int i = 0; i < 4; ++i){
+        if(plaintext[1+i] != (uint8_t)((COMPONENT_ID >> 8*(3-i)) & 0xFF)){
+            print_error("The Component ID checks failed at the component sided");
+            return;
+        }
+    }
+    //Validation passed
+    //Starts Boot
     boot();
+    //Send Boot comfirmation message back to AP
+    plaintext[0] = COMPONENT_CMD_BOOT;
+    memset(transmit_buffer, 0, sizeof(transmit_buffer));//DO WE NEED THIS?
+    message * send_packet = (message*) transmit_buffer;
+    encrypt_sym(plaintext, AES_SIZE, GLOBAL_KEY, send_packet->params);
+    // memcpy((void*)transmit_buffer, ciphertext, AES_SIZE);
+    send_packet_and_ack(sizeof(message), transmit_buffer);
 }
 
 void process_scan() {
     // The AP requested a scan. Respond with the Component ID
-    scan_message* packet = (scan_message*) transmit_buffer;
-    packet->component_id = COMPONENT_ID;
-    send_packet_and_ack(sizeof(scan_message), transmit_buffer);
-}
-
-// We will not using this function
-void process_validate() {
-    // The AP requested a validation. Respond with the Component ID
-    validate_message* packet = (validate_message*) transmit_buffer;
-    packet->component_id = COMPONENT_ID;
-    send_packet_and_ack(sizeof(validate_message), transmit_buffer);
-}
-
-
-
-
-// AP wants to the boot function, and makes the request to the componenet
-// The function will handle the boot process in component side.
-void process_validate_and_boot() {
-
-    //This function is not completed, we need encryption and decryption stuff for every buffer transmiited and recieved. 
-
-    // The AP requested a validation. Respond with the Component ID
-    validate_message* packet = (validate_message*) transmit_buffer;
-    packet->component_id = COMPONENT_ID;
-    send_packet_and_ack(sizeof(validate_message), transmit_buffer);
-    memset(transmit_buffer, 0, MAX_I2C_MESSAGE_LEN);//Do we need to do this? There are no such thing in the original codes
-    // After sending the validation check back to AP, the component will wait for 0.3 seconds for responds from AP.
-    // If it hears nothing, abort the process.
-    memset(receive_buffer, 0, MAX_I2C_MESSAGE_LEN); 
-    if(timed_wait_and_receive_packet(receive_buffer) > 0){
-            command_message* command = (command_message*) receive_buffer;
-            if(command->opcode == COMPONENT_CMD_BOOT){
-                // It will sends the confirm boot message back with the y.
-                boot_message* packet = (boot_message*) transmit_buffer;
-                packet->number_id = COMPONENT_BOOT_MSG;
-                send_packet_and_ack(sizeof(boot_message), transmit_buffer);
-                boot();
-            }
-            else{
-                print_error("Didn't hear boot command from AP, boot aborted");
-            }
+    memset(transmit_buffer, 0, sizeof(transmit_buffer));//DO WE NEED THIS?
+    message* packet = (message*) transmit_buffer;
+    for(int i = 0; i < 4; ++i){
+        packet->params[i] = (uint8_t)((COMPONENT_ID >> 8*(3-i)) & 0xFF);
     }
-    else{
-        print_error("Didn't hear from the AP, boot aborted.");
-    }
+    send_packet_and_ack(sizeof(message), transmit_buffer);
 }
+
+
+
+
+//This if for the four way communication later in the post-boot communication
+// void process_validate_and_boot() {
+
+//     //This function is not completed, we need encryption and decryption stuff for every buffer transmiited and recieved. 
+
+//     // The AP requested a validation. Respond with the Component ID
+//     validate_message* packet = (validate_message*) transmit_buffer;
+//     packet->component_id = COMPONENT_ID;
+//     send_packet_and_ack(sizeof(validate_message), transmit_buffer);
+//     memset(transmit_buffer, 0, MAX_I2C_MESSAGE_LEN);//Do we need to do this? There are no such thing in the original codes
+//     // After sending the validation check back to AP, the component will wait for 0.3 seconds for responds from AP.
+//     // If it hears nothing, abort the process.
+//     memset(receive_buffer, 0, MAX_I2C_MESSAGE_LEN); 
+//     if(timed_wait_and_receive_packet(receive_buffer) > 0){
+//             message* command = (message*) receive_buffer;
+//             if(command->opcode == COMPONENT_CMD_BOOT){
+//                 // It will sends the confirm boot message back with the y.
+//                 boot_message* packet = (boot_message*) transmit_buffer;
+//                 packet->number_id = COMPONENT_BOOT_MSG;
+//                 send_packet_and_ack(sizeof(boot_message), transmit_buffer);
+//                 boot();
+//             }
+//             else{
+//                 print_error("Didn't hear boot command from AP, boot aborted");
+//             }
+//     }
+//     else{
+//         print_error("Didn't hear from the AP, boot aborted.");
+//     }
+// }
 
 void process_attest() {
     // The AP requested attestation. Respond with the attestation data
-    uint8_t len = sprintf((char*)transmit_buffer, "LOC>%s\nDATE>%s\nCUST>%s\n",
+    //First move the Z one byte ahead for the respond
+    for(int i = 0; i < 8; ++i){
+        plaintext[0+i] = plaintext[1+i];
+    }
+
+    // Start to move atttestation data into the transmit_buffer
+    uint8_t len = sprintf((char*)string_buffer, "LOC>%s\nDATE>%s\nCUST>%s\n",
                 ATTESTATION_LOC, ATTESTATION_DATE, ATTESTATION_CUSTOMER) + 1;
+    
+    uint8_t encrypted_len = 8 + len + 1;
+    if(encrypted_len)
+    memset(transmit_buffer, 0, sizeof(transmit_buffer));//DO WE NEED THIS?
     send_packet_and_ack(len, transmit_buffer);
 }
 

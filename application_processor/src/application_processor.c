@@ -55,7 +55,7 @@
 #define AP_BOOT_MSG "Test boot message"
 */
 
-#defile GOLBLE_KEY 
+#define GLOBAL_KEY 
 // Flash Macros
 #define FLASH_ADDR ((MXC_FLASH_MEM_BASE + MXC_FLASH_MEM_SIZE) - (1 * MXC_FLASH_PAGE_SIZE))
 #define FLASH_MAGIC 0xDEADBEEF
@@ -251,7 +251,7 @@ int scan_components() {
         unit8_t ciphertext[AES_SIZE];
         msg[0] = COMPONENT_CMD_SCAN;
         //Calling simple_crypto.c
-        encrypt_sym(msg, AES_SIZE, GOLBLE_KEY, ciphertext);
+        encrypt_sym(msg, AES_SIZE, GLOBAL_KEY, ciphertext);
         //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
 
         //put ciphertext in transmit_buffer
@@ -332,7 +332,7 @@ int boot_components() {
             msg[i+5] = RAND_Z[i];
         }
         //Calling simple_crypto.c
-        encrypt_sym(msg, AES_SIZE, GOLBLE_KEY, ciphertext);
+        encrypt_sym(msg, AES_SIZE, GLOBAL_KEY, ciphertext);
         //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
 
         //put ciphertext in transmit_buffer
@@ -374,7 +374,7 @@ int attest_component(uint32_t component_id) {
         msg[i+1] = RAND_Z[i];
     }
     //Calling simple_crypto.c
-    encrypt_sym(msg, AES_SIZE, GOLBLE_KEY, ciphertext);
+    encrypt_sym(msg, AES_SIZE, GLOBAL_KEY, ciphertext);
     //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
 
     //put ciphertext in transmit_buffer
