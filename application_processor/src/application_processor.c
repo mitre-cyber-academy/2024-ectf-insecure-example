@@ -45,9 +45,8 @@
 
 /********************************* Global Variables **********************************/
 uint8_t synthesized=0; // when you do the command, check if the thing is synthesized yet or not, if not, synthesize the whole thing.
+#define GLOBAL_KEY 
 
-
-#defile GOLBLE_KEY 
 // Flash Macros
 #define FLASH_ADDR ((MXC_FLASH_MEM_BASE + MXC_FLASH_MEM_SIZE) - (1 * MXC_FLASH_PAGE_SIZE))
 #define FLASH_MAGIC 0xDEADBEEF
@@ -200,6 +199,7 @@ int issue_cmd(i2c_addr_t addr, uint8_t* transmit, uint8_t* receive) {
     if (len == ERROR_RETURN) {
         return ERROR_RETURN;
     }
+
     return len;
 }
 
@@ -241,11 +241,11 @@ int scan_components() {
         // Create command message 
         command_message* command = (command_message*) transmit_buffer;
         //command->opcode = COMPONENT_CMD_SCAN;
-        unit8_t msg[AES_SIZE];
-        unit8_t ciphertext[AES_SIZE];
+        uint8_t msg[AES_SIZE];
+        uint8_t ciphertext[AES_SIZE];
         msg[0] = COMPONENT_CMD_SCAN;
         //Calling simple_crypto.c
-        encrypt_sym(msg, AES_SIZE, GOLBLE_KEY, ciphertext);
+        encrypt_sym(msg, AES_SIZE, GLOBAL_KEY, ciphertext);
         //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
 
         //put ciphertext in transmit_buffer
@@ -312,28 +312,29 @@ int boot_components() {
 
         //COMPONENT_CMD_BOOT 1 byte
         //random number Z 4 byte/multiple of 4 bytes 8 byte 
-        unit8_t msg[AES_SIZE];
-        unit8_t ciphertext[AES_SIZE];
+        uint8_t msg[AES_SIZE];
+        uint8_t ciphertext[AES_SIZE];
         msg[0] = COMPONENT_CMD_BOOT;
-        unit32_t cid = flash_status.component_ids[i];
+        uint32_t cid = flash_status.component_ids[i];
         
         //put CompID in msg buffer
         for(int i = 0; i < 4; i++){
             msg[i+1] = (uint8_t)((cid >> 8*(3-i)) & 0xFF);
         }
+        msg[1] = (uint8_t)((cid >> 24) & 0xFF);//1111 1111
+        //1234 1234
         //put Z in msg buffer
         for(int i = 0; i < RAND_Z_SIZE; i++){
             msg[i+5] = RAND_Z[i];
         }
         //Calling simple_crypto.c
-        encrypt_sym(msg, AES_SIZE, GOLBLE_KEY, ciphertext);
+        encrypt_sym(msg, AES_SIZE, GLOBAL_KEY, ciphertext);
         //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
 
         //put ciphertext in transmit_buffer
         for(int i = 0; i < AES_SIZE; i++){
             transmit_buffer[i] = ciphertext[i];
         }
-        
         // Send out command and receive result
         int len = issue_cmd(addr, transmit_buffer, receive_buffer);
         if (len == ERROR_RETURN) {
@@ -360,15 +361,15 @@ int attest_component(uint32_t component_id) {
     //command->opcode = COMPONENT_CMD_ATTEST;
     //COMPONENT_CMD_BOOT 1 byte
     //random number Z 4 byte/multiple of 4 bytes 8 byte 
-    unit8_t msg[AES_SIZE];
-    unit8_t ciphertext[AES_SIZE];
+    uint8_t msg[AES_SIZE];
+    uint8_t ciphertext[AES_SIZE];
     msg[0] = COMPONENT_CMD_ATTEST;
     //put Z in msg buffer
     for(int i = 0; i < RAND_Z_SIZE; i++){
         msg[i+1] = RAND_Z[i];
     }
     //Calling simple_crypto.c
-    encrypt_sym(msg, AES_SIZE, GOLBLE_KEY, ciphertext);
+    encrypt_sym(msg, AES_SIZE, GLOBAL_KEY, ciphertext);
     //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
 
     //put ciphertext in transmit_buffer
