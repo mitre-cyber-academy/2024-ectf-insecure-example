@@ -299,12 +299,12 @@ void process_attest() {
     //         cipher_text_buffer[i+j] = ciphertext[j];
     //     }
     // }
-    encrypt_sym(plain_text_buffer, encrypted_len, GLOBAL_KEY, cipher_text_buffer);
+    encrypt_sym(plain_text_buffer, sizeof(plain_text_buffer), GLOBAL_KEY, cipher_text_buffer);
     //Move the cipher text into the transmit_buffer and reday for transfer
     memset(transmit_buffer, 0, sizeof(transmit_buffer));//DO WE NEED THIS?
     full_message* send_packet = (full_message*)transmit_buffer;
     memcpy(send_packet->param, cipher_text_buffer, sizeof(cipher_text_buffer));
-    send_packet_and_ack(encrypted_len, transmit_buffer);
+    send_packet_and_ack(sizeof(full_message), transmit_buffer);
 }
 
 /*********************************** MAIN *************************************/
