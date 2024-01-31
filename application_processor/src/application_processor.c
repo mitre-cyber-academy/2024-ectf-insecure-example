@@ -99,6 +99,7 @@ typedef enum {
     COMPONENT_CMD_SCAN,
     COMPONENT_CMD_VALIDATE,
     COMPONENT_CMD_BOOT,
+    COMPONENT_CMD_VAlIDATE_AND_BOOT,
     COMPONENT_CMD_ATTEST
 } component_cmd_t;
 
@@ -270,11 +271,13 @@ int validate_and_boot_components(){
     // Send validate command to each component
     for (unsigned i = 0; i < flash_status.component_cnt; i++) {
         // Set the I2C address of the component
-        i2c_addr_t addr = component_id_to_i2c_addr(flash_status.component_ids[i]);
+        uint32_t component_id = flash_status.component_ids[i]
+        i2c_addr_t addr = component_id_to_i2c_addr(component_id);
 
-        // Create command message
+        // Create Validate and boot message
+        // Append 1 byte for command, 4 bytes for component_id, and 8 bytes for random number
         command_message* command = (command_message*) transmit_buffer;
-        command->opcode = COMPONENT_CMD_VALIDATE;
+        command->opcode = COMPONENT_CMD_VAlIDATE_AND_BOOT;
 
         /*
         //Make random number here and append it to the message
@@ -286,7 +289,7 @@ int validate_and_boot_components(){
         // Send out command and receive result
         int len = issue_cmd_custom(addr, transmit_buffer, receive_buffer);
         if (len == ERROR_RETURN) {
-            print_error("Could not validate component\n");
+            print_error("Could not validate or boot component\n");
             return ERROR_RETURN;
         }
         
@@ -294,8 +297,6 @@ int validate_and_boot_components(){
         //Decrypt validate message using the key provided for us and 
         //ensure that the random number is still contained within the message
         //Make sure to correctly distinguish the random number that we made and the one given to us by component
-
-
 
         */
 
@@ -305,43 +306,6 @@ int validate_and_boot_components(){
             print_error("Component ID: 0x%08x invalid\n", flash_status.component_ids[i]);
             return ERROR_RETURN;
         }
-
-        // Clearing Buffers
-        //memset(receive_buffer, 0, MAX_I2C_MESSAGE_LEN);
-        //memset(transmit_buffer, 0, MAX_I2C_MESSAGE_LEN); DO I NEED TO MEMSET OR NO?
-
-        /*
-        //Make random number here OR use the random number given to us through components and append it to the message
-        //Followed by encryption using the key that was provided for us during initialization
-
-
-
-        */
-
-        // Create command message
-        command_message* command = (command_message*) transmit_buffer; // Is this necessary?
-        command->opcode = COMPONENT_CMD_BOOT;
-
-        // Send out command and receive result
-        int len = issue_cmd_custom(addr, transmit_buffer, receive_buffer); 
-        if (len == ERROR_RETURN) {
-            print_error("Could not boot component\n");
-            return ERROR_RETURN;
-        }
-        
-
-        /*
-        //Decrypt receive buffer and make sure that the random number is the same as the one that was sent
-
-        boot_message* boot = (boot_message*) receive_buffer; 
-        if (boot->random_id != random_number) {
-            print_error("Replay attack);
-            return ERROR_RETURN;
-        }
-        */
-
-        // Print boot message from component
-        print_info("0x%x>%s\n", flash_status.component_ids[i], receive_buffer);
     }
     return SUCCESS_RETURN;
 }
