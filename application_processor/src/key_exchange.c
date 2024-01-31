@@ -1,9 +1,5 @@
-#include "ectf_params.h" //to get to all the macros
-#include "board_link.h"
-#include "simple_i2c_peripheral.h"
-#include "xor.h"
 extern flash_status;
-
+#include "key_exchange.h"
 // include random generator from Zack's API
 
 // premise the simple write and receive is sufficient to send a 16 byte stream 
