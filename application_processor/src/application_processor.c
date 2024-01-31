@@ -69,7 +69,6 @@
 //12 byte number
 #define RAND_Z_SIZE 8
 uint8_t RAND_Z[RAND_Z_SIZE];
-Rand_NASYC(RAND_Z, RAND_Z_SIZE);
 
 // AES Macros
 #define AES_SIZE 16// 16 bytes
@@ -81,19 +80,10 @@ Rand_NASYC(RAND_Z, RAND_Z_SIZE);
 // design but can be utilized by your design.
 
 // Data type for receiving a boot message. NEEDS REVIEW, UNSURE HOW TO STRUCT
-typedef struct {
-    uint32_t number_id;
-} boot_message;
 
 typedef struct {
-    //uint8_t opcode;
-    uint8_t params[MAX_I2C_MESSAGE_LEN-1];//8bits X 255
-} command_message;
-
-// Data type for receiving a validate message
-typedef struct {
-    uint32_t component_id;
-} validate_message;
+    uint8_t params[AES_SIZE];
+} message;
 
 // Data type for receiving a scan message
 typedef struct {
@@ -109,12 +99,11 @@ typedef struct {
 
 // Datatype for commands sent to components
 typedef enum {
-    COMPONENT_CMD_NONE,
-    COMPONENT_CMD_SCAN,
-    COMPONENT_CMD_VALIDATE,
-    COMPONENT_CMD_BOOT,
-    COMPONENT_CMD_VAlIDATE_AND_BOOT,
-    COMPONENT_CMD_ATTEST
+    uint8_t COMPONENT_CMD_NONE,
+    uint8_t COMPONENT_CMD_SCAN,
+    uint8_t COMPONENT_CMD_VALIDATE,
+    uint8_t COMPONENT_CMD_BOOT,
+    uint8_t COMPONENT_CMD_ATTEST
 } component_cmd_t;
 
 /********************************* GLOBAL VARIABLES **********************************/
@@ -253,7 +242,7 @@ int scan_components() {
         }
 
         // Create command message 
-        command_message* command = (command_message*) transmit_buffer;
+        message* command = (message*) transmit_buffer;
         //command->opcode = COMPONENT_CMD_SCAN;
         unit8_t msg[AES_SIZE];
         unit8_t ciphertext[AES_SIZE];
@@ -293,15 +282,32 @@ int validate_and_boot_components(){
 
         // Create Validate and boot message
         // Append 1 byte for command, 4 bytes for component_id, and 8 bytes for random number
-        command_message* command = (command_message*) transmit_buffer;
-        command->opcode = COMPONENT_CMD_VAlIDATE_AND_BOOT;
+        message* command = (message*) transmit_buffer; // Not sure what this actually does. Is it required to have the same length?
 
-        /*
-        //Make random number here and append it to the message
-        //Followed by encryption using the key that was provided for us during initialization
+        unit8_t msg[AES_SIZE];
+        unit8_t ciphertext[AES_SIZE];
+        msg[0] = COMPONENT_CMD_VALIDATE;
+        unit32_t cid = flash_status.component_ids[i];
+        
+        //put CompID in msg buffer
+        for(int i = 0; i < 4; i++){
+            msg[i+1] = (uint8_t)((cid >> 8*(3-i)) & 0xFF);
+        }
 
+        Rand_NASYC(RAND_Z, RAND_Z_SIZE);
+        //put Z in msg buffer
+        for(int i = 0; i < RAND_Z_SIZE; i++){
+            msg[i+5] = RAND_Z[i];
+        }
 
-        */
+        //Calling simple_crypto.c
+        encrypt_sym(msg, AES_SIZE, GLOBAL_KEY, ciphertext);
+        //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
+
+        //put ciphertext in transmit_buffer
+        for(int i = 0; i < AES_SIZE; i++){
+            transmit_buffer[i] = ciphertext[i];
+        }
 
         // Send out command and receive result
         int len = issue_cmd_custom(addr, transmit_buffer, receive_buffer);
@@ -309,71 +315,36 @@ int validate_and_boot_components(){
             print_error("Could not validate or boot component\n");
             return ERROR_RETURN;
         }
-        
-        /*
-        //Decrypt validate message using the key provided for us and 
-        //ensure that the random number is still contained within the message
-        //Make sure to correctly distinguish the random number that we made and the one given to us by component
+        //clear transmit_buffer
+        memset(transmit_buffer, 0, MAX_I2C_MESSAGE_LEN);
 
-        */
+        message* response = (message*) receive_buffer;
+        decrypt_sym(response->params, AES_SIZE, GLOBAL_KEY, plaintext);
 
-        validate_message* validate = (validate_message*) receive_buffer;
-        // Check that the result is correct
-        if (validate->component_id != flash_status.component_ids[i]) {
+        //clear receive_buffer
+        memset(receive_buffer, 0, MAX_I2C_MESSAGE_LEN);
+
+        uint8_t response_command = plaintext[0];
+        uint32_t response_cid;
+
+        //load cid
+        for(int i = 0; i < 4; i++){
+            response_cid = plaintext[i+1] << (8*(3-i));
+        }
+        //compare cid
+        if(response_cid != cid){
             print_error("Component ID: 0x%08x invalid\n", flash_status.component_ids[i]);
             return ERROR_RETURN;
         }
-    }
-    return SUCCESS_RETURN;
-}
 
-int boot_components() {
-    // Buffers for board link communication
-    uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
-    uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
-
-    // Send boot command to each component
-    for (unsigned i = 0; i < flash_status.component_cnt; i++) {
-        // Set the I2C address of the component
-        i2c_addr_t addr = component_id_to_i2c_addr(flash_status.component_ids[i]);
-        
-        // Create command message
-        command_message* command = (command_message*) transmit_buffer;
-        //command->opcode = COMPONENT_CMD_BOOT;
-
-        //COMPONENT_CMD_BOOT 1 byte
-        //random number Z 4 byte/multiple of 4 bytes 8 byte 
-        unit8_t msg[AES_SIZE];
-        unit8_t ciphertext[AES_SIZE];
-        msg[0] = COMPONENT_CMD_BOOT;
-        unit32_t cid = flash_status.component_ids[i];
-        
-        //put CompID in msg buffer
-        for(int i = 0; i < 4; i++){
-            msg[i+1] = (uint8_t)((cid >> 8*(3-i)) & 0xFF);
-        }
-        //put Z in msg buffer
+        //compare Z value
         for(int i = 0; i < RAND_Z_SIZE; i++){
-            msg[i+5] = RAND_Z[i];
-        }
-        //Calling simple_crypto.c
-        encrypt_sym(msg, AES_SIZE, GOLBLE_KEY, ciphertext);
-        //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
-
-        //put ciphertext in transmit_buffer
-        for(int i = 0; i < AES_SIZE; i++){
-            transmit_buffer[i] = ciphertext[i];
-        }
-        
-        // Send out command and receive result
-        int len = issue_cmd(addr, transmit_buffer, receive_buffer);
-        if (len == ERROR_RETURN) {
-            print_error("Could not boot component\n");
-            return ERROR_RETURN;
+            if (plaintext[i+5] != RAND_Z[i]){
+                print_error("Random number provided is invalid");
+                return ERROR_RETURN;
+            }
         }
 
-        // Print boot message from component
-        print_info("0x%x>%s\n", flash_status.component_ids[i], receive_buffer);
     }
     return SUCCESS_RETURN;
 }
@@ -387,7 +358,7 @@ int attest_component(uint32_t component_id) {
     i2c_addr_t addr = component_id_to_i2c_addr(component_id);
 
     // Create command message
-    command_message* command = (command_message*) transmit_buffer;
+    message* command = (message*) transmit_buffer;
     //command->opcode = COMPONENT_CMD_ATTEST;
     //COMPONENT_CMD_BOOT 1 byte
     //random number Z 4 byte/multiple of 4 bytes 8 byte 
@@ -399,7 +370,7 @@ int attest_component(uint32_t component_id) {
         msg[i+1] = RAND_Z[i];
     }
     //Calling simple_crypto.c
-    encrypt_sym(msg, AES_SIZE, GOLBLE_KEY, ciphertext);
+    encrypt_sym(msg, AES_SIZE, GLOBLE_KEY, ciphertext);
     //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
 
     //put ciphertext in transmit_buffer
@@ -408,9 +379,9 @@ int attest_component(uint32_t component_id) {
     }
 
     // Send out command and receive result
-    int len = issue_cmd(addr, transmit_buffer, receive_buffer);
+    int len = issue_cmd_custom(addr, transmit_buffer, receive_buffer);
     if (len == ERROR_RETURN) {
-        print_error("Could not attest component\n");
+        print_error("Could not validate or boot component\n");
         return ERROR_RETURN;
     }
 
