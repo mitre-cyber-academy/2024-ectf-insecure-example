@@ -386,7 +386,7 @@ void boot() {
 int validate_pin() {
     char buf[50];
     recv_input("Enter pin: ", buf);
-    if (!strcmp(buf, AP_PIN)) {
+    if (!strncmp(buf, AP_PIN,6)) {     //TODO: 1
         print_debug("Pin Accepted!\n");
         return SUCCESS_RETURN;
     }
@@ -398,7 +398,7 @@ int validate_pin() {
 int validate_token() {
     char buf[50];
     recv_input("Enter token: ", buf);
-    if (!strcmp(buf, AP_TOKEN)) {
+    if (!strncmp(buf, AP_TOKEN, 16)) { //TODO: 2
         print_debug("Token Accepted!\n");
         return SUCCESS_RETURN;
     }
@@ -500,13 +500,13 @@ int main() {
         recv_input("Enter Command: ", buf);
 
         // Execute requested command
-        if (!strcmp(buf, "list")) {
+        if (!strcmp(buf, "list")) { //TODO: 3
             scan_components();
-        } else if (!strcmp(buf, "boot")) {
+        } else if (!strcmp(buf, "boot")) { //TODO: 4
             attempt_boot();
-        } else if (!strcmp(buf, "replace")) {
+        } else if (!strcmp(buf, "replace")) { //TODO: 5
             attempt_replace();
-        } else if (!strcmp(buf, "attest")) {
+        } else if (!strcmp(buf, "attest")) { //TODO: 6
             attempt_attest();
         } else {
             print_error("Unrecognized command '%s'\n", buf);
