@@ -44,8 +44,6 @@
 #include "global_secrets.h"
 
 /********************************* Global Variables **********************************/
-uint8_t synthesized=0; // when you do the command, check if the thing is synthesized yet or not, if not, synthesize the whole thing.
-#define GLOBAL_KEY 
 
 // Flash Macros
 #define FLASH_ADDR ((MXC_FLASH_MEM_BASE + MXC_FLASH_MEM_SIZE) - (1 * MXC_FLASH_PAGE_SIZE))
@@ -60,12 +58,12 @@ uint8_t synthesized=0; // when you do the command, check if the thing is synthes
 //12 byte number
 #define RAND_Z_SIZE 8
 uint8_t RAND_Z[RAND_Z_SIZE];
-Rand_NASYC(RAND_Z, RAND_Z_SIZE);
 
 // AES Macros
 #define AES_SIZE 16// 16 bytes
 
-
+uint8_t synthesized=0; // when you do the command, check if the thing is synthesized yet or not, if not, synthesize the whole thing.
+uint8_t GLOBAL_KEY[AES_SIZE];
 
 /******************************** TYPE DEFINITIONS ********************************/
 // Data structure for sending commands to component
@@ -549,7 +547,11 @@ void attempt_attest() {
 int main() {
     // Initialize board
     init();
-
+    Rand_NASYC(RAND_Z, RAND_Z_SIZE);
+    if(synthesized == 0){
+        synthesis_key();
+        GLOBAL_KEY;
+    }
     // Print the component IDs to be helpful
     // Your design does not need to do this
     print_info("Application Processor Started\n");
