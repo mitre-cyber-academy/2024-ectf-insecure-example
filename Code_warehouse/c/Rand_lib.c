@@ -3,11 +3,13 @@ volatile int wait;
 volatile int callback_result;
 
 int RandomInt(void){
-    return MXC_TRNG_RandomInt();
+    MXC_TRNG_Init();
+    int ret = MXC_TRNG_RandomInt();
+    MXC_TRNG_Shutdown();
+    return ret;
 }
 
 void Rand_NASYC(uint8_t *buf, uint32_t len){
-    memset(buf, 0, len);
     MXC_TRNG_Init();
     MXC_TRNG_Random(buf, len);
     MXC_TRNG_Shutdown();

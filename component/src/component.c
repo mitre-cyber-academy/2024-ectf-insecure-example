@@ -21,6 +21,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "Code_warehouse/c/Rand_lib.h"
+
 #include "simple_i2c_peripheral.h"
 #include "board_link.h"
 
@@ -157,7 +159,6 @@ void component_process_cmd() {
     decrypt_sym(command->params, AES_SIZE, GLOBAL_KEY, plaintext);
     //decrypt_sym(uint8_t *ciphertext, size_t len, uint8_t *key, uint8_t *plaintext)
 
-    
     // Output to application processor dependent on command received
     switch (plaintext[0]) {
     case COMPONENT_CMD_BOOT:

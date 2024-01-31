@@ -25,7 +25,7 @@
 #include <string.h>
 
 #include "aes.h"
-#include "Code warehousec/c/Rand_lib.h"
+#include "Code_warehouse/c/Rand_lib.h"
 
 #include "board_link.h"
 #include "simple_flash.h"
@@ -43,19 +43,8 @@
 #include "ectf_params.h"
 #include "global_secrets.h"
 
-/********************************* CONSTANTS **********************************/
+/********************************* Global Variables **********************************/
 
-// Passed in through ectf-params.h
-// Example of format of ectf-params.h shown here
-/*
-#define AP_PIN "123456"
-#define AP_TOKEN "0123456789abcdef"
-#define COMPONENT_IDS 0x11111124, 0x11111125
-#define COMPONENT_CNT 2
-#define AP_BOOT_MSG "Test boot message"
-*/
-
-#define GLOBAL_KEY
 // Flash Macros
 #define FLASH_ADDR ((MXC_FLASH_MEM_BASE + MXC_FLASH_MEM_SIZE) - (1 * MXC_FLASH_PAGE_SIZE))
 #define FLASH_MAGIC 0xDEADBEEF
@@ -72,6 +61,9 @@ uint8_t RAND_Z[RAND_Z_SIZE];
 
 // AES Macros
 #define AES_SIZE 16// 16 bytes
+
+uint8_t synthesized=0; // when you do the command, check if the thing is synthesized yet or not, if not, synthesize the whole thing.
+uint8_t GLOBAL_KEY[AES_SIZE];
 
 /******************************** TYPE DEFINITIONS ********************************/
 // Data structure for sending commands to component
@@ -234,10 +226,11 @@ int scan_components() {
         // Create command message 
         message* command = (message*) transmit_buffer;
         //command->opcode = COMPONENT_CMD_SCAN;
-        unit8_t msg[AES_SIZE];
-        unit8_t ciphertext[AES_SIZE];
+        uint8_t msg[AES_SIZE];
+        uint8_t ciphertext[AES_SIZE];
         msg[0] = COMPONENT_CMD_SCAN;
         //Calling simple_crypto.c
+        encrypt_sym(msg, AES_SIZE, GLOBAL_KEY, ciphertext);
         encrypt_sym(msg, AES_SIZE, GLOBAL_KEY, ciphertext);
         //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
 
@@ -291,6 +284,7 @@ int validate_and_boot_components(){
         }
 
         //Calling simple_crypto.c
+        encrypt_sym(msg, AES_SIZE, GLOBAL_KEY, ciphertext);
         encrypt_sym(msg, AES_SIZE, GLOBAL_KEY, ciphertext);
         //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
 
@@ -358,8 +352,8 @@ int attest_component(uint32_t component_id) {
 
     //COMPONENT_CMD_BOOT 1 byte
     //random number Z 4 byte/multiple of 4 bytes 8 byte 
-    unit8_t msg[AES_SIZE];
-    unit8_t ciphertext[AES_SIZE];
+    uint8_t msg[AES_SIZE];
+    uint8_t ciphertext[AES_SIZE];
     msg[0] = COMPONENT_CMD_ATTEST;
 
     Rand_NASYC(RAND_Z, RAND_Z_SIZE);
@@ -567,7 +561,11 @@ void attempt_attest() {
 int main() {
     // Initialize board
     init();
-
+    Rand_NASYC(RAND_Z, RAND_Z_SIZE);
+    if(synthesized == 0){
+        synthesis_key();
+        GLOBAL_KEY;
+    }
     // Print the component IDs to be helpful
     // Your design does not need to do this
     print_info("Application Processor Started\n");
