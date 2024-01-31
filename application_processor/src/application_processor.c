@@ -14,7 +14,7 @@
 
 #include "board.h"
 #include "i2c.h"
-#include "icc.h"
+// #include "icc.h"
 #include "led.h"
 #include "mxc_delay.h"
 #include "mxc_device.h"
@@ -41,9 +41,8 @@
 #include "ectf_params.h"
 #include "global_secrets.h"
 
-// ICC control
-#include "icc.h"
-#define ICC MXC_ICC0
+// Include cache disable
+#include "disable_cache.h"
 
 /********************************* CONSTANTS **********************************/
 
@@ -210,8 +209,8 @@ int get_provisioned_ids(uint32_t *buffer) {
 // Initialize the device
 // This must be called on startup to initialize the flash and i2c interfaces
 void init() {
-    // Disable cache..?
-    MXC_ICC_Disable(ICC);
+    // Disable the cache?
+    disable_cache();
 
     // Enable global interrupts
     __enable_irq();
