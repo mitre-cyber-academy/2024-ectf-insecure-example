@@ -55,7 +55,7 @@
 #define AP_BOOT_MSG "Test boot message"
 */
 
-#defile GOLBLE_KEY 
+#define GLOBAL_KEY
 // Flash Macros
 #define FLASH_ADDR ((MXC_FLASH_MEM_BASE + MXC_FLASH_MEM_SIZE) - (1 * MXC_FLASH_PAGE_SIZE))
 #define FLASH_MAGIC 0xDEADBEEF
@@ -84,6 +84,11 @@ uint8_t RAND_Z[RAND_Z_SIZE];
 typedef struct {
     uint8_t params[AES_SIZE];
 } message;
+
+typedef struct {
+    uint8_t param[MAX_I2C_MESSAGE_LEN]
+} full_message;
+
 
 // Data type for receiving a scan message
 typedef struct {
@@ -208,7 +213,7 @@ int issue_cmd(i2c_addr_t addr, uint8_t* transmit, uint8_t* receive) {
 //Custom issue cmd function for validate&boot, might be able to combine them all
 int issue_cmd_custom(i2c_addr_t addr, uint8_t* transmit, uint8_t* receive) {
     // Send message
-    int result = send_packet(addr, sizeof(uint8_t), transmit);
+    int result = send_packet(addr, sizeof(uint8_t), transmit); // maybe change the length of packet to 16?
     if (result == ERROR_RETURN) {
         return ERROR_RETURN;
     }
@@ -248,7 +253,7 @@ int scan_components() {
         unit8_t ciphertext[AES_SIZE];
         msg[0] = COMPONENT_CMD_SCAN;
         //Calling simple_crypto.c
-        encrypt_sym(msg, AES_SIZE, GOLBLE_KEY, ciphertext);
+        encrypt_sym(msg, AES_SIZE, GLOBAL_KEY, ciphertext);
         //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
 
         //put ciphertext in transmit_buffer
@@ -353,6 +358,7 @@ int attest_component(uint32_t component_id) {
     // Buffers for board link communication
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
     uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
+    uint8_t attest_data[MAX_I2C_MESSAGE_LEN];
 
     // Set the I2C address of the component
     i2c_addr_t addr = component_id_to_i2c_addr(component_id);
@@ -365,12 +371,14 @@ int attest_component(uint32_t component_id) {
     unit8_t msg[AES_SIZE];
     unit8_t ciphertext[AES_SIZE];
     msg[0] = COMPONENT_CMD_ATTEST;
+
+    Rand_NASYC(RAND_Z, RAND_Z_SIZE);
     //put Z in msg buffer
     for(int i = 0; i < RAND_Z_SIZE; i++){
         msg[i+1] = RAND_Z[i];
     }
     //Calling simple_crypto.c
-    encrypt_sym(msg, AES_SIZE, GLOBLE_KEY, ciphertext);
+    encrypt_sym(msg, AES_SIZE, GLOBAL_KEY, ciphertext);
     //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
 
     //put ciphertext in transmit_buffer
@@ -381,13 +389,37 @@ int attest_component(uint32_t component_id) {
     // Send out command and receive result
     int len = issue_cmd_custom(addr, transmit_buffer, receive_buffer);
     if (len == ERROR_RETURN) {
-        print_error("Could not validate or boot component\n");
+        print_error("Could not attest\n");
         return ERROR_RETURN;
+    }
+    int aes_size_response;
+    if(len%16){
+        aes_size_response = (len-len%16) + 16
+    }
+    else{
+        aes_size_response = len
+    }
+
+    // decrypt attestation data
+    full_message* response = (full_message*) receive_buffer
+    decrypt_sym(response->params, aes_size_response, GLOBAL_KEY, plaintext);
+
+    //compare Z value
+    for(int i = 0; i < RAND_Z_SIZE; i++){
+        if (plaintext[i] != RAND_Z[i]){
+            print_error("Random number provided is invalid");
+            return ERROR_RETURN;
+        }
+    }
+
+    //store attest data
+    for(int i = 0; i < len; i++){
+        attest_data[i] = plaintext[i+RAND_Z_SIZE]
     }
 
     // Print out attestation data 
     print_info("C>0x%08x\n", component_id);
-    print_info("%s", receive_buffer);
+    print_info("%s", attest_data);
     return SUCCESS_RETURN;
 }
 
@@ -483,10 +515,7 @@ void attempt_boot() {
         return;
     }
     print_debug("All Components validated\n");
-    if (boot_components()) {
-        print_error("Failed to boot all components\n");
-        return;
-    }
+
     // Print boot message
     // This always needs to be printed when booting
     print_info("AP>%s\n", AP_BOOT_MSG);
