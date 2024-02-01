@@ -29,10 +29,7 @@ pkgs.mkShell {
     pkgs.minicom
   ];
 
-  msdk = builtins.fetchGit {
-    url = "https://github.com/Analog-Devices-MSDK/msdk.git";
-    ref = "refs/tags/v2023_06";
-  };
+  msdk = ./msdk-main;
   shellHook =
     ''
       cp -r $msdk $PWD/msdk
