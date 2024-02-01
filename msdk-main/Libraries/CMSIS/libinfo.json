@@ -1,0 +1,15 @@
+{
+	"name":"CMSIS-DSP",
+	"ipaths":[
+		"5.9.0/Core/Include",
+        	"5.9.0/DSP/Include",
+        	"5.9.0/DSP/Include/dsp"
+	],
+	"vpaths":[
+		
+	],
+	"defines":[
+
+    ],
+	"whitelist":"False"
+}

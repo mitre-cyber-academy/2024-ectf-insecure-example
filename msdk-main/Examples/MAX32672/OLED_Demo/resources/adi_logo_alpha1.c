@@ -1,0 +1,56 @@
+/******************************************************************************
+ *
+ * Copyright (C) 2022-2023 Maxim Integrated Products, Inc. All Rights Reserved.
+ * (now owned by Analog Devices, Inc.),
+ * Copyright (C) 2023 Analog Devices, Inc. All Rights Reserved. This software
+ * is proprietary to Analog Devices, Inc. and its licensors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************************/
+
+#if defined(LV_LVGL_H_INCLUDE_SIMPLE)
+#include "lvgl.h"
+#else
+#include "lvgl/lvgl.h"
+#endif
+
+#ifndef LV_ATTRIBUTE_MEM_ALIGN
+#define LV_ATTRIBUTE_MEM_ALIGN
+#endif
+
+#ifndef LV_ATTRIBUTE_IMG_ADI_LOGO
+#define LV_ATTRIBUTE_IMG_ADI_LOGO
+#endif
+
+const LV_ATTRIBUTE_MEM_ALIGN LV_ATTRIBUTE_LARGE_CONST LV_ATTRIBUTE_IMG_ADI_LOGO uint8_t
+    adi_logo_map[] = {
+        0xff, 0xff, 0xff, 0xfc, 0xff, 0xff, 0xff, 0xfc, 0xff, 0xff, 0xff, 0xfc, 0xff, 0xff, 0xff,
+        0xfc, 0xff, 0xff, 0xff, 0xfc, 0xfc, 0xff, 0xff, 0xfc, 0xfc, 0x3f, 0xff, 0xfc, 0xfc, 0x1f,
+        0xff, 0xfc, 0xfc, 0x07, 0xff, 0xfc, 0xfc, 0x01, 0xff, 0xfc, 0xfc, 0x00, 0x7f, 0xfc, 0xfc,
+        0x00, 0x3f, 0xfc, 0xfc, 0x00, 0x0f, 0xfc, 0xfc, 0x00, 0x03, 0xfc, 0xfc, 0x00, 0x00, 0xfc,
+        0xfc, 0x00, 0x00, 0xfc, 0xfc, 0x00, 0x01, 0xfc, 0xfc, 0x00, 0x07, 0xfc, 0xfc, 0x00, 0x1f,
+        0xfc, 0xfc, 0x00, 0x7f, 0xfc, 0xfc, 0x00, 0xff, 0xfc, 0xfc, 0x03, 0xff, 0xfc, 0xfc, 0x0f,
+        0xff, 0xfc, 0xfc, 0x1f, 0xff, 0xfc, 0xfc, 0x7f, 0xff, 0xfc, 0xfd, 0xff, 0xff, 0xfc, 0xff,
+        0xff, 0xff, 0xfc, 0xff, 0xff, 0xff, 0xfc, 0xff, 0xff, 0xff, 0xfc, 0xff, 0xff, 0xff, 0xfc,
+    };
+
+const lv_img_dsc_t adi_logo = {
+    .header.cf = LV_IMG_CF_ALPHA_1BIT,
+    .header.always_zero = 0,
+    .header.reserved = 0,
+    .header.w = 30,
+    .header.h = 30,
+    .data_size = 120,
+    .data = adi_logo_map,
+};
