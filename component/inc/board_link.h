@@ -66,4 +66,6 @@ void send_packet_and_ack(uint8_t len, uint8_t* packet);
 */
 uint8_t wait_and_receive_packet(uint8_t* packet);
 
+int timed_wait_and_receive_packet(uint8_t* packet);
+
 #endif
