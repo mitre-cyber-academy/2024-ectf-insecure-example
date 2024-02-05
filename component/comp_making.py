@@ -104,13 +104,13 @@ def change_byte_to_macro(byte_stream, name)->str:
     return macro_string
     
 def Read_files()->None:
-    if file_exist(Path(f"../deployment/{macro_information['ids']}.txt")):
-        fh = open(f"../deployment/{macro_information['ids']}.txt", "r")
+    if file_exist(Path(f"../deployment/{macro_information['ids'][0]}.txt")):
+        fh = open(f"../deployment/{macro_information['ids'][0]}.txt", "r")
         lines = fh.readlines()
         fh.close()
-        macro_information["share"]=get_atts_customer(lines[1])
-        macro_information["mask"]=get_atts_customer(lines[2])
-        macro_information["final"]=get_atts_customer(lines[3])
+        macro_information["share"]=lines[1]
+        macro_information["mask"]=lines[2]
+        macro_information["final"]=lines[3]
     else:
         macro_information["share"]=change_byte_to_macro("0000000000000000".encode(),'KEY_SHARE')
         macro_information["mask"]=change_byte_to_macro("0000000000000000".encode(),'MASK')
@@ -127,7 +127,7 @@ def write_key_to_files()->None:
     fh = open("inc/ectf_params.h", "w")
     fh.write("#ifndef __ECTF_PARAMS__\n")
     fh.write("#define __ECTF_PARAMS__\n")
-    fh.write(f"#define COMPONENT_ID \"{macro_information['ids']}\"\n") 
+    fh.write(f"#define COMPONENT_ID {macro_information['ids'][0]}\n") 
     fh.write(f"#define COMPONENT_BOOT_MSG \"{macro_information['message']}\"\n") 
     fh.write(f"#define ATTESTATION_LOC \"{macro_information['location']}\"\n") 
     fh.write(f"#define ATTESTATION_DATE \"{macro_information['date']}\"\n") 
