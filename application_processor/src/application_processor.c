@@ -4,16 +4,17 @@
  * @brief eCTF AP Example Design Implementation
  * @date 2024
  *
- * This source file is part of an example system for MITRE's 2024 Embedded System CTF (eCTF).
- * This code is being provided only for educational purposes for the 2024 MITRE eCTF competition,
- * and may not meet MITRE standards for quality. Use this code at your own risk!
+ * This source file is part of an example system for MITRE's 2024 Embedded
+ * System CTF (eCTF). This code is being provided only for educational purposes
+ * for the 2024 MITRE eCTF competition, and may not meet MITRE standards for
+ * quality. Use this code at your own risk!
  *
  * @copyright Copyright (c) 2024 The MITRE Corporation
  */
 
 #include "board.h"
 #include "i2c.h"
-#include "icc.h"
+// #include "icc.h"
 #include "led.h"
 #include "mxc_delay.h"
 #include "mxc_device.h"
@@ -28,7 +29,6 @@
 #include "Code_warehouse/c/Rand_lib.h"
 
 #include "board_link.h"
-#include "simple_flash.h"
 #include "host_messaging.h"
 #include "key_exchange.h"
 
@@ -44,6 +44,12 @@
 // Includes from containerized build
 #include "ectf_params.h"
 #include "global_secrets.h"
+
+// Include cache disable
+#include "disable_cache.h"
+
+// Include cache disable
+#include "disable_cache.h"
 
 /********************************* Global Variables **********************************/
 
@@ -67,7 +73,20 @@ uint8_t RAND_Z[RAND_Z_SIZE];
 uint8_t synthesized=0; // when you do the command, check if the thing is synthesized yet or not, if not, synthesize the whole thing.
 uint8_t GLOBAL_KEY[AES_SIZE];
 
-/******************************** TYPE DEFINITIONS ********************************/
+// Secure Communication Macro
+//data is the output
+//12 byte number
+#define RAND_Z_SIZE 8
+uint8_t RAND_Z[RAND_Z_SIZE];
+
+// AES Macros
+#define AES_SIZE 16// 16 bytes
+
+uint8_t synthesized=0; // when you do the command, check if the thing is synthesized yet or not, if not, synthesize the whole thing.
+uint8_t GLOBAL_KEY[AES_SIZE];
+
+/******************************** TYPE DEFINITIONS
+ * ********************************/
 // Data structure for sending commands to component
 // Params allows for up to MAX_I2C_MESSAGE_LEN - 1 bytes to be send
 // along with the opcode through board_link. This is not utilized by the example
@@ -104,21 +123,24 @@ typedef enum {
     uint8_t COMPONENT_CMD_ATTEST,
 } component_cmd_t;
 
-/********************************* GLOBAL VARIABLES **********************************/
+/********************************* GLOBAL VARIABLES
+ * **********************************/
 // Variable for information stored in flash memory
 flash_entry flash_status;
 
-/******************************* POST BOOT FUNCTIONALITY *********************************/
+/******************************* POST BOOT FUNCTIONALITY
+ * *********************************/
 /**
-
  * @brief Secure Send 
  * 
  * @param address: i2c_addr_t, I2C address of recipient
  * @param buffer: uint8_t*, pointer to data to be send
- * @param len: uint8_t, size of data to be sent 
- * 
- * Securely send data over I2C. This function is utilized in POST_BOOT functionality.
- * This function must be implemented by your team to align with the security requirements.
+ * @param len: uint8_t, size of data to be sent
+ *
+ * Securely send data over I2C. This function is utilized in POST_BOOT
+ functionality.
+ * This function must be implemented by your team to align with the security
+ requirements.
 
 */
 int secure_send(i2c_addr_t address, uint8_t* buffer, uint8_t len) {
@@ -127,32 +149,34 @@ int secure_send(i2c_addr_t address, uint8_t* buffer, uint8_t len) {
 
 /**
  * @brief Secure Receive
- * 
+ *
  * @param address: i2c_addr_t, I2C address of sender
  * @param buffer: uint8_t*, pointer to buffer to receive data to
- * 
+ *
  * @return int: number of bytes received, negative if error
- * 
- * Securely receive data over I2C. This function is utilized in POST_BOOT functionality.
- * This function must be implemented by your team to align with the security requirements.
-*/
-int secure_receive(i2c_addr_t address, uint8_t* buffer) {
+ *
+ * Securely receive data over I2C. This function is utilized in POST_BOOT
+ * functionality. This function must be implemented by your team to align with
+ * the security requirements.
+ */
+int secure_receive(i2c_addr_t address, uint8_t *buffer) {
     return poll_and_receive_packet(address, buffer);
 }
 
 /**
  * @brief Get Provisioned IDs
- * 
+ *
  * @param uint32_t* buffer
- * 
+ *
  * @return int: number of ids
- * 
+ *
  * Return the currently provisioned IDs and the number of provisioned IDs
- * for the current AP. This functionality is utilized in POST_BOOT functionality.
- * This function must be implemented by your team.
-*/
-int get_provisioned_ids(uint32_t* buffer) {
-    memcpy(buffer, flash_status.component_ids, flash_status.component_cnt * sizeof(uint32_t));
+ * for the current AP. This functionality is utilized in POST_BOOT
+ * functionality. This function must be implemented by your team.
+ */
+int get_provisioned_ids(uint32_t *buffer) {
+    memcpy(buffer, flash_status.component_ids,
+           flash_status.component_cnt * sizeof(uint32_t));
     return flash_status.component_cnt;
 }
 
@@ -161,15 +185,18 @@ int get_provisioned_ids(uint32_t* buffer) {
 // Initialize the device
 // This must be called on startup to initialize the flash and i2c interfaces
 void init() {
+    // Disable the cache?
+    disable_cache();
 
-    // Enable global interrupts    
+    // Enable global interrupts
     __enable_irq();
 
     // Setup Flash
     flash_simple_init();
 
     // Test application has been booted before
-    flash_simple_read(FLASH_ADDR, (uint32_t*)&flash_status, sizeof(flash_entry));
+    flash_simple_read(FLASH_ADDR, (uint32_t *)&flash_status,
+                      sizeof(flash_entry));
 
     // Write Component IDs from flash if first boot e.g. flash unwritten
     if (flash_status.flash_magic != FLASH_MAGIC) {
@@ -178,18 +205,19 @@ void init() {
         flash_status.flash_magic = FLASH_MAGIC;
         flash_status.component_cnt = COMPONENT_CNT;
         uint32_t component_ids[COMPONENT_CNT] = {COMPONENT_IDS};
-        memcpy(flash_status.component_ids, component_ids, 
-            COMPONENT_CNT*sizeof(uint32_t));
+        memcpy(flash_status.component_ids, component_ids,
+               COMPONENT_CNT * sizeof(uint32_t));
 
-        flash_simple_write(FLASH_ADDR, (uint32_t*)&flash_status, sizeof(flash_entry));
+        flash_simple_write(FLASH_ADDR, (uint32_t *)&flash_status,
+                           sizeof(flash_entry));
     }
-    
+
     // Initialize board link interface
     board_link_init();
 }
 
 // Send a command to a component and receive the result
-int issue_cmd(i2c_addr_t addr, uint8_t* transmit, uint8_t* receive) {
+int issue_cmd(i2c_addr_t addr, uint8_t *transmit, uint8_t *receive) {
     // Send message
     int result = send_packet(addr, sizeof(uint8_t), transmit); // maybe change the length of packet to 16?
     if (result == ERROR_RETURN) {
@@ -204,7 +232,8 @@ int issue_cmd(i2c_addr_t addr, uint8_t* transmit, uint8_t* receive) {
     return len
 }
 
-/******************************** COMPONENT COMMS ********************************/
+/******************************** COMPONENT COMMS
+ * ********************************/
 
 // We're assuming this doesn't need protection/modification
 int scan_components() { 
@@ -217,7 +246,7 @@ int scan_components() {
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
     uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
 
-    // Scan scan command to each component 
+    // Scan scan command to each component
     for (i2c_addr_t addr = 0x8; addr < 0x78; addr++) {
         // I2C Blacklist:
         // 0x18, 0x28, and 0x36 conflict with separate devices on MAX78000FTHR
@@ -244,7 +273,7 @@ int scan_components() {
 
         // Success, device is present
         if (len > 0) {
-            scan_message* scan = (scan_message*) receive_buffer;
+            scan_message *scan = (scan_message *)receive_buffer;
             print_info("F>0x%08x\n", scan->component_id);
         }
     }
@@ -408,7 +437,7 @@ int attest_component(uint32_t component_id) {
         attest_data[i] = plaintext[i+RAND_Z_SIZE+1]
     }
 
-    // Print out attestation data 
+    // Print out attestation data
     print_info("C>0x%08x\n", component_id);
     print_info("%s", attest_data);
     return SUCCESS_RETURN;
@@ -421,41 +450,41 @@ int attest_component(uint32_t component_id) {
 // YOUR DESIGN MUST NOT CHANGE THIS FUNCTION
 // Boot message is customized through the AP_BOOT_MSG macro
 void boot() {
-    // Example of how to utilize included simple_crypto.h
-    #ifdef CRYPTO_EXAMPLE
+// Example of how to utilize included simple_crypto.h
+#ifdef CRYPTO_EXAMPLE
     // This string is 16 bytes long including null terminator
     // This is the block size of included symmetric encryption
-    char* data = "Crypto Example!";
+    char *data = "Crypto Example!";
     uint8_t ciphertext[BLOCK_SIZE];
     uint8_t key[KEY_SIZE];
-    
+
     // Zero out the key
     bzero(key, BLOCK_SIZE);
 
     // Encrypt example data and print out
-    encrypt_sym((uint8_t*)data, BLOCK_SIZE, key, ciphertext); 
+    encrypt_sym((uint8_t *)data, BLOCK_SIZE, key, ciphertext);
     print_debug("Encrypted data: ");
     print_hex_debug(ciphertext, BLOCK_SIZE);
 
-    // Hash example encryption results 
+    // Hash example encryption results
     uint8_t hash_out[HASH_SIZE];
     hash(ciphertext, BLOCK_SIZE, hash_out);
 
     // Output hash result
     print_debug("Hash result: ");
     print_hex_debug(hash_out, HASH_SIZE);
-    
+
     // Decrypt the encrypted message and print out
     uint8_t decrypted[BLOCK_SIZE];
     decrypt_sym(ciphertext, BLOCK_SIZE, key, decrypted);
     print_debug("Decrypted message: %s\r\n", decrypted);
-    #endif
+#endif
 
-    // POST BOOT FUNCTIONALITY
-    // DO NOT REMOVE IN YOUR DESIGN
-    #ifdef POST_BOOT
-        POST_BOOT
-    #else
+// POST BOOT FUNCTIONALITY
+// DO NOT REMOVE IN YOUR DESIGN
+#ifdef POST_BOOT
+    POST_BOOT
+#else
     // Everything after this point is modifiable in your design
     // LED loop to show that boot occurred
     while (1) {
@@ -472,7 +501,7 @@ void boot() {
         LED_Off(LED3);
         MXC_Delay(500000);
     }
-    #endif
+#endif
 }
 
 // Compare the entered PIN to the correct PIN
@@ -538,10 +567,11 @@ void attempt_replace() {
 
             // write updated component_ids to flash
             flash_simple_erase_page(FLASH_ADDR);
-            flash_simple_write(FLASH_ADDR, (uint32_t*)&flash_status, sizeof(flash_entry));
+            flash_simple_write(FLASH_ADDR, (uint32_t *)&flash_status,
+                               sizeof(flash_entry));
 
             print_debug("Replaced 0x%08x with 0x%08x\n", component_id_out,
-                    component_id_in);
+                        component_id_in);
             print_success("Replace\n");
             return;
         }
@@ -549,7 +579,7 @@ void attempt_replace() {
 
     // Component Out was not found
     print_error("Component 0x%08x is not provisioned for the system\r\n",
-            component_id_out);
+                component_id_out);
 }
 
 // Attest a component if the PIN is correct
