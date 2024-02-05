@@ -573,10 +573,16 @@ int main() {
     // Initialize board
     init();
     Rand_NASYC(RAND_Z, RAND_Z_SIZE);
+    
+
+    //The key_sync takes the first argument as a char* array, don't know if it will cause problem
+    //Since the GLOBAL_KEY is unit8_t
     if(synthesized == 0){
         key_sync(GLOBAL_KEY, flash_status.component_cnt, 
         flash_status.component_ids[0], flash_status.component_ids[1]);
     }
+
+
     // Print the component IDs to be helpful
     // Your design does not need to do this
     print_info("Application Processor Started\n");
@@ -585,6 +591,12 @@ int main() {
     char buf[100];
     while (1) {
         recv_input("Enter Command: ", buf);
+
+        //Shouldn't the merging happen here?
+        // if(synthesized == 0){
+        //     key_sync(GLOBAL_KEY, flash_status.component_cnt, 
+        //     flash_status.component_ids[0], flash_status.component_ids[1]);
+        // }
 
         // Execute requested command
         if (!strcmp(buf, "list")) {
