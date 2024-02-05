@@ -102,7 +102,7 @@ int poll_and_receive_packet(i2c_addr_t address, uint8_t* packet) {
     if (result < SUCCESS_RETURN) {
         return ERROR_RETURN;
     }
-    i2c_simple_write_transmit_done(address, true);
+    result = i2c_simple_write_transmit_done(address, true);
     if (result < SUCCESS_RETURN) {
         return ERROR_RETURN;
     }
