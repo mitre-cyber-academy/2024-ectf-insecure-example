@@ -1,5 +1,4 @@
-# eCTF Insecure Example
-This repository holds the Final Design for UCI-ECTF Team 2024. The MISC System.
+
 
 
 ## Layout

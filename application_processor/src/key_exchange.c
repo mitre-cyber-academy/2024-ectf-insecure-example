@@ -1,9 +1,5 @@
-#include "ectf_params.h" //to get to all the macros
-#include "board_link.h"
-#include "simple_i2c_peripheral.h"
-#include "xor.h"
 extern flash_status;
-
+#include "key_exchange.h"
 // include random generator from Zack's API
 
 // premise the simple write and receive is sufficient to send a 16 byte stream 
@@ -23,7 +19,7 @@ char* key_exchange1(char* dest, uint32_t component_id){
     int len = poll_and_receive_packet(addr, cache);
     if(len==16){
         XOR(KEY_SHARE,cache,16,cache);
-        XOR(cache,F1,16,cache);
+        XOR(cache,F1,16,cache); //Should be the dest for the fourth argument?
         return;
     }else{
         print_info("receiving length ERROR :( ");

@@ -78,15 +78,20 @@ int send_packet(i2c_addr_t address, uint8_t len, uint8_t* packet) {
 int poll_and_receive_packet(i2c_addr_t address, uint8_t* packet) {
 
     int result = SUCCESS_RETURN;
-    while (true) {
+    int time_fail = -1
+    for(int i = 0; i < 3000000; i++){
         result = i2c_simple_read_transmit_done(address);
         if (result < SUCCESS_RETURN) {
             return ERROR_RETURN;
         }
         else if (result == SUCCESS_RETURN) {
+            time_fail = 0
             break;
         }
-        MXC_Delay(50);
+        MXC_Delay(50); // Dont really understand this delay
+    }
+    if (time_fail){ // exceeded timeframe
+        return ERROR_RETURN
     }
 
     int len = i2c_simple_read_transmit_len(address);
@@ -97,7 +102,7 @@ int poll_and_receive_packet(i2c_addr_t address, uint8_t* packet) {
     if (result < SUCCESS_RETURN) {
         return ERROR_RETURN;
     }
-    i2c_simple_write_transmit_done(address, true);
+    result = i2c_simple_write_transmit_done(address, true);
     if (result < SUCCESS_RETURN) {
         return ERROR_RETURN;
     }
