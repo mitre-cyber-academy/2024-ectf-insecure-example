@@ -9,6 +9,8 @@ uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
 
 
 char* key_sync(char* dest){
+    memset(receive_buffer, 0, sizeof(receive_buffer));
+    memset(transmit_buffer, 0, sizeof(transmit_buffer));
     char * FINAL_KEY = char[18];
     char * cash_k2_r = char[18];
     wait_and_receive_packet(receive_buffer);
