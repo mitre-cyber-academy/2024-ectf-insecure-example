@@ -233,7 +233,6 @@ int scan_components() {
         msg[0] = COMPONENT_CMD_SCAN;
         //Calling simple_crypto.c
         encrypt_sym(msg, AES_SIZE, GLOBAL_KEY, ciphertext);
-        encrypt_sym(msg, AES_SIZE, GLOBAL_KEY, ciphertext);
         //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
 
         //put ciphertext in transmit_buffer
@@ -271,8 +270,10 @@ int validate_and_boot_components(){
 
         unit8_t msg[AES_SIZE];
         unit8_t ciphertext[AES_SIZE];
-        msg[0] = COMPONENT_CMD_VALIDATE;
         unit32_t cid = flash_status.component_ids[i];
+
+        // op_code
+        msg[0] = COMPONENT_CMD_VALIDATE;
         
         //put CompID in msg buffer
         for(int i = 0; i < 4; i++){
@@ -285,9 +286,8 @@ int validate_and_boot_components(){
             msg[i+5] = RAND_Z[i];
         }
 
-        //Calling simple_crypto.c
-        encrypt_sym(msg, AES_SIZE, GLOBAL_KEY, ciphertext);
-        encrypt_sym(msg, AES_SIZE, GLOBAL_KEY, ciphertext);
+        // Encrypting message and storing it in ciphertext
+        encrypt_sym(&msg, AES_SIZE, &GLOBAL_KEY, &ciphertext);
         //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
 
         //put ciphertext in transmit_buffer
@@ -305,7 +305,7 @@ int validate_and_boot_components(){
         memset(transmit_buffer, 0, MAX_I2C_MESSAGE_LEN);
 
         message* response = (message*) receive_buffer;
-        decrypt_sym(response->params, AES_SIZE, GLOBAL_KEY, plaintext);
+        decrypt_sym(&(response->params), AES_SIZE, &GLOBAL_KEY, &plaintext);
 
         //clear receive_buffer
         memset(receive_buffer, 0, MAX_I2C_MESSAGE_LEN);
@@ -352,18 +352,26 @@ int attest_component(uint32_t component_id) {
     // Create command message
     message* command = (message*) transmit_buffer;
 
-    //COMPONENT_CMD_BOOT 1 byte
-    //random number Z 4 byte/multiple of 4 bytes 8 byte 
-    uint8_t msg[AES_SIZE];
-    uint8_t ciphertext[AES_SIZE];
+
+    unit8_t msg[AES_SIZE];
+    unit8_t ciphertext[AES_SIZE];
+    unit32_t cid = flash_status.component_ids[i];
+
+    // op_code
     msg[0] = COMPONENT_CMD_ATTEST;
+    
+    //put CompID in msg buffer
+    for(int i = 0; i < 4; i++){
+        msg[i+1] = (uint8_t)((cid >> 8*(3-i)) & 0xFF);
+    }
 
     Rand_NASYC(RAND_Z, RAND_Z_SIZE);
     //put Z in msg buffer
     for(int i = 0; i < RAND_Z_SIZE; i++){
-        msg[i+1] = RAND_Z[i];
+        msg[i+5] = RAND_Z[i];
     }
-    //Calling simple_crypto.c
+
+    // Encrypting message and storing it in ciphertext
     encrypt_sym(msg, AES_SIZE, GLOBAL_KEY, ciphertext);
 
     //put ciphertext in transmit_buffer
