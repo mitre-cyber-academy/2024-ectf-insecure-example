@@ -221,9 +221,13 @@ void process_scan() {
 
 void process_attest() {
     // The AP requested attestation. Respond with the attestation data
-    //First move the Z one byte ahead for the respond
-    for(int i = 0; i < 8; ++i){
-        plaintext[0+i] = plaintext[1+i];
+
+    //Validate the Component ID; plaintext[1:4]
+    for(int i = 0; i < 4; ++i){
+        if(plaintext[1+i] != (uint8_t)((COMPONENT_ID >> 8*(3-i)) & 0xFF)){
+            print_error("The Component ID checks failed at the component sided");
+            return;
+        }
     }
 
     // Start to move atttestation data into the transmit_buffer
@@ -238,8 +242,8 @@ void process_attest() {
     //Combine the sending plain text
     //Move the Z into the plain_text_buffer
     memset(plain_text_buffer, 0, sizeof(plain_text_buffer));
-    for(int i = 1; i < 9: ++i){
-        plain_text_buffer[i] = plaintext[i];
+    for(int i = 0; i < 8: ++i){
+        plain_text_buffer[i+1] = plaintext[i+5]; // plaintext[5:12]
     }
     //Move the string buffer into the plain_text_buffer
     for(int i = 0; i < len; ++i){
