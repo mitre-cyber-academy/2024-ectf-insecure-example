@@ -232,14 +232,14 @@ int scan_components() {
         uint8_t ciphertext[AES_SIZE];
         msg[0] = COMPONENT_CMD_SCAN;
         //Calling simple_crypto.c
-        encrypt_sym(msg, AES_SIZE, GLOBAL_KEY, ciphertext);
+        encrypt_sym(&msg, AES_SIZE, &GLOBAL_KEY, &ciphertext);
         //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
 
         //put ciphertext in transmit_buffer
         for(int i = 0; i < AES_SIZE; i++){
             transmit_buffer[i] = ciphertext[i];
         }
-        // Send out command and receive result
+        // Send out command and receive resultGLOBAL_KEY, c
         int len = issue_cmd(addr, transmit_buffer, receive_buffer);
 
         // Success, device is present
@@ -372,7 +372,7 @@ int attest_component(uint32_t component_id) {
     }
 
     // Encrypting message and storing it in ciphertext
-    encrypt_sym(msg, AES_SIZE, GLOBAL_KEY, ciphertext);
+    encrypt_sym(&msg, AES_SIZE, &GLOBAL_KEY, &ciphertext);
 
     //put ciphertext in transmit_buffer
     for(int i = 0; i < AES_SIZE; i++){
@@ -390,7 +390,7 @@ int attest_component(uint32_t component_id) {
 
     // decrypt attestation data
     full_message* response = (full_message*) receive_buffer
-    decrypt_sym(response->params, MAX_I2C_MESSAGE_LEN, GLOBAL_KEY, plaintext);
+    decrypt_sym(&(response->params), MAX_I2C_MESSAGE_LEN, &GLOBAL_KEY, &plaintext);
 
     //store length of message
     response_len = plaintext[0];
