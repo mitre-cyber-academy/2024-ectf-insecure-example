@@ -50,7 +50,8 @@
 */
 //AES
 #define AES_SIZE 16// 16 bytes
-#define GLOBAL_KEY
+unit GLOBAL_KEY[AES_SIZE];
+uint8_t synthesized=0; 
 
 /******************************** TYPE DEFINITIONS ********************************/
 // Commands received by Component using 32 bit integer
@@ -262,9 +263,18 @@ int main(void) {
     
     LED_On(LED2);
 
+    //We assume the first message from the AP will be merging the key.
+
     while (1) {
         wait_and_receive_packet(receive_buffer);
-
-        component_process_cmd();
+        if(synthesized == 0){
+            //The key_sync takes the first argument as a char* array, don't know if it will cause problem
+            //Since the GLOBAL_KEY is unit8_t
+            key_sync(GLOBAL_KEY);
+            synthesized = 1;
+        }
+        else{
+            component_process_cmd();
+        }
     }
 }

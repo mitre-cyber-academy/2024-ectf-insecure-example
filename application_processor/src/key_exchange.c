@@ -19,7 +19,7 @@ char* key_exchange1(char* dest, uint32_t component_id){
     int len = poll_and_receive_packet(addr, cache);
     if(len==16){
         XOR(KEY_SHARE,cache,16,cache);
-        XOR(cache,F1,16,cache);
+        XOR(cache,F1,16,cache); //Should be the dest for the fourth argument?
         return;
     }else{
         print_info("receiving length ERROR :( ");
