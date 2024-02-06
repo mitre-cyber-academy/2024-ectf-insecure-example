@@ -78,6 +78,7 @@ uint8_t GLOBAL_KEY[AES_SIZE];
 //12 byte number
 #define RAND_Z_SIZE 8
 uint8_t RAND_Z[RAND_Z_SIZE];
+uint8_t RAND_Y[RAND_Z_SIZE];
 
 // AES Macros
 #define AES_SIZE 16// 16 bytes
@@ -113,6 +114,8 @@ typedef enum {
     uint8_t COMPONENT_CMD_VALIDATE,
     uint8_t COMPONENT_CMD_BOOT,
     uint8_t COMPONENT_CMD_ATTEST,
+    uint8_t COMPONENT_CMD_SECURE_SEND_VALIDATE,
+    uint8_t COMPONENT_CMD_SECURE_SEND_CONFIMRED,
 } component_cmd_t;
 
 /********************************* GLOBAL VARIABLES **********************************/
@@ -151,6 +154,62 @@ int secure_send(i2c_addr_t address, uint8_t* buffer, uint8_t len) {
  */
 int secure_receive(i2c_addr_t address, uint8_t *buffer) {
     return poll_and_receive_packet(address, buffer, GLOBAL_KEY);
+}
+
+int secure_send_and_receive(i2c_addr_t address, uint8_t* transmit_buffer, uint8_t* receive_buffer, uint8_t len) {
+    uint8_t challenge_buffer[MAX_I2C_MESSAGE_LEN];
+    uint8_t answer_buffer[MAX_I2C_MESSAGE_LEN];
+
+    message * send_packet = (message *) challenge_buffer;
+    Rand_ASYC(RAND_Z, RAND_Z_SIZE);
+    send_packet->opcode = COMPONENT_CMD_SECURE_SEND_VALIDATE;
+    send_packet->rand_z = RAND_Z;
+
+    int len = issue_cmd(address, challenge_buffer, answer_buffer);
+        if (len == ERROR_RETURN) {
+            print_error("Failed to validate the secure send for post boot\n");
+            return ERROR_RETURN;
+        }
+    
+    message * response = (message *) answer_buffer;
+    //compare cmd code
+    if(response->op_code != COMPONENT_CMD_SECURE_SEND_VALIDATE){
+        print_error("Invalid command message from component")
+    }
+
+    //compare Z value
+    if (response->rand_z != RAND_Z){
+        print_error("AP received expired validate message in post boot");
+        return ERROR_RETURN;
+    }
+
+    message * send_packet = (message *) transmit_buffer;
+    response->rand_y = RAND_Y;
+    send_packet->opcode = COMPONENT_CMD_SECURE_SEND_CONFIMRED;
+    send_packet->rand_z = RAND_Z;
+    send_packet->rand_y = RAND_Y;
+
+    int len = issue_cmd(address, transmit_buffer, receive_buffer);
+    if (len == ERROR_RETURN) {
+        print_error("Failed to send and receive for post boot\n");
+        return ERROR_RETURN;
+    }
+
+    message * response = (message *) receive_buffer;
+    //compare cmd code
+    if(response->op_code != COMPONENT_CMD_SECURE_SEND_CONFIMRED){
+        print_error("Invalid command message from component");
+        return ERROR_RETURN;
+    }
+    //compare Y value
+    if (response->rand_y != RAND_Y){
+        print_error("AP received expired confirm message in post boot");
+        return ERROR_RETURN;
+    }
+    return len
+
+
+
 }
 
 /**
@@ -301,7 +360,8 @@ int validate_and_boot_components(){
 
         //compare cmd code
         if(response->op_code != COMPONENT_CMD_BOOT){
-            print_error("Invalid command message from component")
+            print_error("Invalid command message from component");
+            return ERROR_RETURN;
         }
 
         //compare cid
