@@ -284,15 +284,15 @@ int validate_and_boot_components(){
         unit32_t cid = flash_status.component_ids[i];
 
         // op_code
-        message->opcode = COMPONENT_CMD_VALIDATE;
+        command->opcode = COMPONENT_CMD_VALIDATE;
         
         // comp_ID
-        message->comp_ID = cid
+        command->comp_ID = cid
 
         Rand_NASYC(RAND_Z, RAND_Z_SIZE);
 
         // rand_z
-        message->rand_z = RAND_Z
+        command->rand_z = RAND_Z
 
         // Send out command and receive result
         int len = issue_cmd(addr, transmit_buffer, receive_buffer);
@@ -334,19 +334,21 @@ int attest_component(uint32_t component_id) {
     // Create Validate and boot message
     message* command = (message*) transmit_buffer;
 
+    transmit_buffer[MAX_I2C_MESSAGE_LEN]
+
     // Comp_ID
     unit32_t cid = flash_status.component_ids[i];
 
     // op_code
-    message->opcode = COMPONENT_CMD_ATTEST;
+    command->opcode = COMPONENT_CMD_ATTEST;
     
     // comp_ID
-    message->comp_ID = cid
+    command->comp_ID = cid
 
     Rand_NASYC(RAND_Z, RAND_Z_SIZE);
 
     // rand_z
-    message->rand_z = RAND_Z
+    command->rand_z = RAND_Z
 
     // Send out command and receive result
     int len = issue_cmd(addr, transmit_buffer, receive_buffer);
