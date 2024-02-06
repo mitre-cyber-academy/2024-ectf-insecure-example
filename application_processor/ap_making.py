@@ -2,35 +2,6 @@ from pathlib import Path
 import secrets
 import re
 
-
-# this is for deployment
-"""
-1. Read the deployment file, find its respective ID
-2. Read K_share, K from the file, if exist. Otherwise, empty
-3. Read the parmeter.h get all clear-text attestation data 
-4. Encrypt All attestation data and write back to the .h file
-
------------------------------------------------------------------------------------------------------------------------------
-
-A simple Sanity Check for How to Read the textfile and Encrypt with the first key
-
-    encryption_tool=ec.Encrypt(key) 
-    print(encryption_tool.encrypt("12345"))
-
-    with open(Path(f"../deployment/{macro_information['ids'][0]}.txt"), 'rb') as file:
-        # Read the first line
-        first_line = file.readline()
-        encryption_tool=ec.Encrypt(first_line)
-        print(encryption_tool.encrypt("12345")) 
-"""
-
-
-
-
-
-
-
-
 # This is for Ap, Maintain and Tested by Jinyao on Jan 25
 """
 1. Get pin, token, component ids, component count boot message
@@ -197,7 +168,7 @@ def write_key_to_files(file_paths:list)->None:
         comp_val=2
         shares=create_shares(16,3)
         key=gen_AES_key(shares)
-        print(change_byte_to_macro(key,"KEY").encode())
+        #print(change_byte_to_macro(key,"KEY").encode())
         masks=gen_masks(2)
 
         # Write the keys into the Component file

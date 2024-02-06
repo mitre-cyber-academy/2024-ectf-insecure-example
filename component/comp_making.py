@@ -28,10 +28,15 @@ macro_information={}
 
 # End of Global Data Definition: 
 
-def get_ids(macro):
-    pattern = r'0x[\da-fA-F]+'    
-    ids = re.findall(pattern, macro)
-    return ids
+def get_id(macro):
+    pattern = r'#define COMPONENT_ID (\d+)'
+    match = re.search(pattern, macro)
+    if match:
+        # Extract the number from the matched group
+        number = match.group(1)
+        return number
+    else:
+        print("Number not found in the string.")
         
 def get_boot_message(macro):
     pattern = r'#define COMPONENT_BOOT_MSG\s*"([^"]+)"'
@@ -85,7 +90,7 @@ def extract_info():
     fh = open(Path("./inc/ectf_params.h"), "r")
     lines = fh.readlines()
     fh.close()
-    macro_information["ids"]=get_ids(lines[2])
+    macro_information["ids"]=get_id(lines[2])
     macro_information["message"]=get_boot_message(lines[3])
     macro_information["location"]=get_atts_loc(lines[4])
     macro_information["date"]=get_atts_date(lines[5])
@@ -104,8 +109,8 @@ def change_byte_to_macro(byte_stream, name)->str:
     return macro_string
     
 def Read_files()->None:
-    if file_exist(Path(f"../deployment/{macro_information['ids'][0]}.txt")):
-        fh = open(f"../deployment/{macro_information['ids'][0]}.txt", "r")
+    if file_exist(Path(f"../deployment/{hex(int(macro_information['ids']))}.txt")):
+        fh = open(f"../deployment/{hex(int(macro_information['ids']))}.txt", "r")
         lines = fh.readlines()
         fh.close()
         macro_information["share"]=lines[1]
@@ -127,7 +132,7 @@ def write_key_to_files()->None:
     fh = open("inc/ectf_params.h", "w")
     fh.write("#ifndef __ECTF_PARAMS__\n")
     fh.write("#define __ECTF_PARAMS__\n")
-    fh.write(f"#define COMPONENT_ID {macro_information['ids'][0]}\n") 
+    fh.write(f"#define COMPONENT_ID {macro_information['ids']}\n") 
     fh.write(f"#define COMPONENT_BOOT_MSG \"{macro_information['message']}\"\n") 
     fh.write(f"#define ATTESTATION_LOC \"{macro_information['location']}\"\n") 
     fh.write(f"#define ATTESTATION_DATE \"{macro_information['date']}\"\n") 

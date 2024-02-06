@@ -26,7 +26,6 @@
 
 // Includes from containerized build
 #include "ectf_params.h"
-#include "global_secrets.h"
 
 // Include cache disable
 #include "disable_cache.h"
@@ -55,11 +54,10 @@
 */
 //AES
 #define AES_SIZE 16// 16 bytes
-unit GLOBAL_KEY[AES_SIZE];
+uint8_t GLOBAL_KEY[AES_SIZE];
 uint8_t synthesized=0; 
 
-/******************************** TYPE DEFINITIONS
- * ********************************/
+/******************************** TYPE DEFINITIONS ********************************/
 // Commands received by Component using 32 bit integer
 typedef enum {
     uint8_t COMPONENT_CMD_NONE,
@@ -69,8 +67,7 @@ typedef enum {
     uint8_t COMPONENT_CMD_ATTEST,
 } component_cmd_t;
 
-/******************************** TYPE DEFINITIONS
- * ********************************/
+/******************************** TYPE DEFINITIONS ********************************/
 // Data structure for receiving messages from the AP
 typedef struct {
     uint8_t params[AES_SIZE];

@@ -25,7 +25,7 @@
 #include <string.h>
 
 #include "aes.h"
-#include "Code_warehouse/c/Rand_lib.h"
+#include "Rand_lib.h"
 
 #include "board_link.h"
 #include "host_messaging.h"
@@ -43,9 +43,6 @@
 
 // Includes from containerized build
 #include "ectf_params.h"
-#include "global_secrets.h"
-
-// Include cache disable header file
 #include "disable_cache.h"
 
 /********************************* Global Variables **********************************/

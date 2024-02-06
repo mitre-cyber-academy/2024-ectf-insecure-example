@@ -12,7 +12,7 @@
 # **********************************************************
 
 # Add your config here!
-
+$(shell python ap_making.py)
 # This example is only compatible with the FTHR board,
 # so we override the BOARD value to hard-set it.
 override BOARD=FTHR_RevA
