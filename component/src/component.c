@@ -60,8 +60,7 @@ uint8_t RAND_Y[RAND_Z_SIZE];
 uint8_t GLOBAL_KEY[AES_SIZE];
 uint8_t synthesized=0; 
 
-/******************************** TYPE DEFINITIONS
- * ********************************/
+/******************************** TYPE DEFINITIONS ********************************/
 // Commands received by Component using 32 bit integer
 typedef enum {
     COMPONENT_CMD_NONE,
@@ -73,8 +72,7 @@ typedef enum {
     COMPONENT_CMD_SECURE_SEND_CONFIMRED,
 } component_cmd_t;
 
-/******************************** TYPE DEFINITIONS
- * ********************************/
+/******************************** TYPE DEFINITIONS *********************************/
 // Data structure for receiving messages from the AP
 typedef struct {
     uint8_t opcode;
@@ -85,8 +83,7 @@ typedef struct {
 } message;
 
 
-/********************************* FUNCTION DECLARATIONS
- * **********************************/
+/********************************* FUNCTION DECLARATIONS **********************************/
 // Core function definitions
 void component_process_cmd(void);
 void process_boot(void);
@@ -94,15 +91,13 @@ void process_scan(void);
 void process_validate(void);
 void process_attest(void);
 
-/********************************* GLOBAL VARIABLES
- * **********************************/
+/********************************* GLOBAL VARIABLES **********************************/
 // Global varaibles
 uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
 uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
 uint8_t string_buffer[MAX_I2C_MESSAGE_LEN-21];
 
-/******************************* POST BOOT FUNCTIONALITY
- * *********************************/
+/******************************* POST BOOT FUNCTIONALITY *********************************/
 /**
  * @brief Secure Send
  *
@@ -160,8 +155,7 @@ void secure_receive_and_send(uint8_t * receive_buffer, uint8_t * transmit_buffer
 }
 
 
-/******************************* FUNCTION DEFINITIONS
- * *********************************/
+/******************************* FUNCTION DEFINITIONS *********************************/
 
 // Example boot sequence
 // Your design does not need to change this

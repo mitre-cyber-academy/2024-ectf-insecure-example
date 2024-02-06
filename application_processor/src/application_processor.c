@@ -84,8 +84,7 @@ uint8_t RAND_Z[RAND_Z_SIZE];
 
 uint8_t synthesized=0; // when you do the command, check if the thing is synthesized yet or not, if not, synthesize the whole thing.
 
-/******************************** TYPE DEFINITIONS
- * ********************************/
+/******************************** TYPE DEFINITIONS ********************************/
 // Data structure for sending commands to component
 // Params allows for up to MAX_I2C_MESSAGE_LEN - 1 bytes to be send
 // along with the opcode through board_link. This is not utilized by the example
@@ -116,13 +115,11 @@ typedef enum {
     uint8_t COMPONENT_CMD_ATTEST,
 } component_cmd_t;
 
-/********************************* GLOBAL VARIABLES
- * **********************************/
+/********************************* GLOBAL VARIABLES **********************************/
 // Variable for information stored in flash memory
 flash_entry flash_status;
 
-/******************************* POST BOOT FUNCTIONALITY
- * *********************************/
+/******************************* POST BOOT FUNCTIONALITY *********************************/
 /**
  * @brief Secure Send 
  * 
@@ -225,8 +222,7 @@ int issue_cmd(i2c_addr_t addr, uint8_t *transmit, uint8_t *receive) {
     return len
 }
 
-/******************************** COMPONENT COMMS
- * ********************************/
+/******************************** COMPONENT COMMS ********************************/
 
 // We're assuming this doesn't need protection/modification
 int scan_components() { 
