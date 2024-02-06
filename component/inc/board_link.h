@@ -53,7 +53,7 @@ i2c_addr_t component_id_to_i2c_addr(uint32_t component_id);
  * send a packet to the AP and wait for the message to be received
 */
 void send_packet_and_ack(uint8_t len, uint8_t* packet);
-
+void secure_send_packet_and_ack(uint8_t len, uint8_t* packet, uint8_t* GLOBAL_KEY);
 /**
  * @brief Wait for a new message from AP and process the message
  * 
@@ -65,7 +65,6 @@ void send_packet_and_ack(uint8_t len, uint8_t* packet);
  * once the message is available it is returned in the buffer pointer to by packet 
 */
 uint8_t wait_and_receive_packet(uint8_t* packet);
-
+uint8_t secure_wait_and_receive_packet(uint8_t* packet, uint8_t* GLOBAL_KEY);
 int timed_wait_and_receive_packet(uint8_t* packet);
-
 #endif

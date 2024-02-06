@@ -197,11 +197,12 @@ def write_key_to_files(file_paths:list)->None:
         comp_val=2
         shares=create_shares(16,3)
         key=gen_AES_key(shares)
+        print(change_byte_to_macro(key,"KEY").encode())
         masks=gen_masks(2)
 
         # Write the keys into the Component file
         f = open(Path(f"../deployment/{macro_information['ids'][0]}.txt"), "wb")
-        f.write(key)
+        f.write("something".encode())
         f.write(b'\n')
         f.write(change_byte_to_macro(shares[1],"KEY_SHARE").encode())
         f.write(b'\n')
@@ -211,7 +212,7 @@ def write_key_to_files(file_paths:list)->None:
         f.close()
 
         f = open(Path(f"../deployment/{macro_information['ids'][1]}.txt"), "wb")
-        f.write(key)
+        f.write("something".encode())
         f.write(b'\n')
         f.write(change_byte_to_macro(shares[2],"KEY_SHARE").encode())
         f.write(b'\n')

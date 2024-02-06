@@ -16,6 +16,7 @@
 #include "board_link.h"
 #include "mxc_delay.h"
 
+
 /******************************** FUNCTION DEFINITIONS ********************************/
 /**
  * @brief Initialize the board link connection
@@ -107,5 +108,39 @@ int poll_and_receive_packet(i2c_addr_t address, uint8_t* packet) {
         return ERROR_RETURN;
     }
 
+    return len;
+}
+
+
+/**
+ * @brief encrypt and send an arbitrary packet over I2C
+ * 
+ * @param address: i2c_addr_t, i2c address
+ * @param len: uint8_t, length of the packet
+ * @param buffer: uint8_t*, pointer to data to be send
+ * @param GLOBAL_KEY: 16 byte globel key
+ * @return status: SUCCESS_RETURN if success, ERROR_RETURN if error
+*/
+int secure_send_packet(i2c_addr_t address, uint8_t len, uint8_t* buffer, uint8_t* GLOBAL_KEY) {
+        uint8_t ciphertext[len];
+        // Encrypting message and storing it in ciphertext
+        encrypt_sym(buffer, len, GLOBAL_KEY, ciphertext);
+        //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
+    return send_packet(address, len, ciphertext);
+}
+
+/**
+ * @brief Poll a component and receive and decrypt a packet
+ * 
+ * @param address: i2c_addr_t, i2c address
+ * @param packet: uint8_t*, pointer to a buffer where a packet will be received 
+ * @param GLOBAL_KEY: 16 byte globel key
+ * @return int: size of data received, ERROR_RETURN if error
+*/
+int secure_poll_and_receive_packet(i2c_addr_t address, uint8_t *buffer, uint8_t* GLOBAL_KEY) {
+    uint8_t plaintext[MAX_I2C_MESSAGE_LEN];
+    int len = poll_and_receive_packet(address, buffer);//buf is gonna be 256 long(MAX_I2C_MESSAGE_LEN)
+    decrypt_sym(buffer, MAX_I2C_MESSAGE_LEN, GLOBAL_KEY, plaintext);
+    memmove(buffer, plaintext, MAX_I2C_MESSAGE_LEN);
     return len;
 }

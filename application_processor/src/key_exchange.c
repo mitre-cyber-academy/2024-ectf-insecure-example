@@ -1,7 +1,6 @@
 extern flash_status;
 #include "key_exchange.h"
-// include random generator from Zack's API
-
+#include "Code_warehouse/c/Rand_lib.h"
 // premise the simple write and receive is sufficient to send a 16 byte stream 
 // this assumes the key is 16 bytes 
 char* key_exchange1(char* dest, uint32_t component_id){
@@ -82,8 +81,8 @@ char* key_exchange2(char* dest, char* random; uint32_t component_id1, uint32_t c
 
 
 char* key_sync(char* dest, uint32_t component_cnt, uint32_t component_id1, uint32_t component_id2){
-    char* random_number=char[18];//char???
-    Rand_NASYC(random_number, sizeof(random_number));
+    char* random_number=char[18];
+    Rand_NASYC(random_number, 18);
     if (component_cnt==2){
         key_exchange2(dest, random_number, component_id1, component_id2);
     }
