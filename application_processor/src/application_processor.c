@@ -83,7 +83,6 @@ uint8_t RAND_Z[RAND_Z_SIZE];
 #define AES_SIZE 16// 16 bytes
 
 uint8_t synthesized=0; // when you do the command, check if the thing is synthesized yet or not, if not, synthesize the whole thing.
-uint8_t GLOBAL_KEY[AES_SIZE];
 
 /******************************** TYPE DEFINITIONS
  * ********************************/
@@ -92,20 +91,14 @@ uint8_t GLOBAL_KEY[AES_SIZE];
 // along with the opcode through board_link. This is not utilized by the example
 // design but can be utilized by your design.
 
-// Data type for receiving a boot message. NEEDS REVIEW, UNSURE HOW TO STRUCT
-
+// Data type for all commands
 typedef struct {
-    uint8_t params[AES_SIZE];
+    uint8_t opcode;
+    uint32_t comp_ID;
+    uint8_t rand_z[RAND_Z_SIZE]
+    uint8_t rand_y[RAND_Z_SIZE]
+    uint8_t remain[MAX_I2C_MESSAGE_LEN-21];
 } message;
-
-typedef struct {
-    uint8_t param[MAX_I2C_MESSAGE_LEN]
-} full_message;
-
-// Data type for receiving a scan message
-typedef struct {
-    uint32_t component_id;
-} scan_message;
 
 // Datatype for information stored in flash
 typedef struct {
@@ -144,7 +137,7 @@ flash_entry flash_status;
 
 */
 int secure_send(i2c_addr_t address, uint8_t* buffer, uint8_t len) {
-    return send_packet(address, len, buffer);
+    return send_packet(address, len, buffer, GLOBAL_KEY);
 }
 
 /**
@@ -160,7 +153,7 @@ int secure_send(i2c_addr_t address, uint8_t* buffer, uint8_t len) {
  * the security requirements.
  */
 int secure_receive(i2c_addr_t address, uint8_t *buffer) {
-    return poll_and_receive_packet(address, buffer);
+    return poll_and_receive_packet(address, buffer, GLOBAL_KEY);
 }
 
 /**
@@ -219,13 +212,13 @@ void init() {
 // Send a command to a component and receive the result
 int issue_cmd(i2c_addr_t addr, uint8_t *transmit, uint8_t *receive) {
     // Send message
-    int result = send_packet(addr, sizeof(uint8_t), transmit); // maybe change the length of packet to 16?
+    int result = send_packet(addr, sizeof(uint8_t), transmit, GLOBAL_KEY); // maybe change the length of packet to 16?
     if (result == ERROR_RETURN) {
         return ERROR_RETURN;
     }
 
     // Receive message
-    int len = poll_and_receive_packet(addr, receive); // Use secure custom function
+    int len = poll_and_receive_packet(addr, receive, GLOBAL_KEY); // Use secure custom function
     if (len == ERROR_RETURN) {
         return ERROR_RETURN;
     }
@@ -256,24 +249,15 @@ int scan_components() {
 
         // Create command message 
         message* command = (message*) transmit_buffer;
-        //command->opcode = COMPONENT_CMD_SCAN;
-        uint8_t msg[AES_SIZE];
-        uint8_t ciphertext[AES_SIZE];
-        msg[0] = COMPONENT_CMD_SCAN;
-        //Calling simple_crypto.c
-        encrypt_sym(&msg, AES_SIZE, &GLOBAL_KEY, &ciphertext);
-        //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
 
-        //put ciphertext in transmit_buffer
-        for(int i = 0; i < AES_SIZE; i++){
-            transmit_buffer[i] = ciphertext[i];
-        }
-        // Send out command and receive resultGLOBAL_KEY, c
+        message->opcode = COMPONENT_CMD_SCAN;
+
+        // Send out command and receive result
         int len = issue_cmd(addr, transmit_buffer, receive_buffer);
 
         // Success, device is present
         if (len > 0) {
-            scan_message *scan = (scan_message *)receive_buffer;
+            message *scan = (message *)receive_buffer;
             print_info("F>0x%08x\n", scan->component_id);
         }
     }
@@ -294,35 +278,21 @@ int validate_and_boot_components(){
         i2c_addr_t addr = component_id_to_i2c_addr(component_id);
 
         // Create Validate and boot message
-        // Append 1 byte for command, 4 bytes for component_id, and 8 bytes for random number
-        message* command = (message*) transmit_buffer; // Not sure what this actually does. Is it required to have the same length?
+        message* command = (message*) transmit_buffer;
 
-        unit8_t msg[AES_SIZE];
-        unit8_t ciphertext[AES_SIZE];
+        // Comp_ID
         unit32_t cid = flash_status.component_ids[i];
 
         // op_code
-        msg[0] = COMPONENT_CMD_VALIDATE;
+        message->opcode = COMPONENT_CMD_VALIDATE;
         
-        //put CompID in msg buffer
-        for(int i = 0; i < 4; i++){
-            msg[i+1] = (uint8_t)((cid >> 8*(3-i)) & 0xFF);
-        }
+        // comp_ID
+        message->comp_ID = cid
 
         Rand_NASYC(RAND_Z, RAND_Z_SIZE);
-        //put Z in msg buffer
-        for(int i = 0; i < RAND_Z_SIZE; i++){
-            msg[i+5] = RAND_Z[i];
-        }
 
-        // Encrypting message and storing it in ciphertext
-        encrypt_sym(&msg, AES_SIZE, &GLOBAL_KEY, &ciphertext);
-        //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
-
-        //put ciphertext in transmit_buffer
-        for(int i = 0; i < AES_SIZE; i++){
-            transmit_buffer[i] = ciphertext[i];
-        }
+        // rand_z
+        message->rand_z = RAND_Z
 
         // Send out command and receive result
         int len = issue_cmd(addr, transmit_buffer, receive_buffer);
@@ -330,41 +300,25 @@ int validate_and_boot_components(){
             print_error("Could not validate or boot component\n");
             return ERROR_RETURN;
         }
-        //clear transmit_buffer
-        memset(transmit_buffer, 0, MAX_I2C_MESSAGE_LEN);
 
         message* response = (message*) receive_buffer;
-        decrypt_sym(&(response->params), AES_SIZE, &GLOBAL_KEY, &plaintext);
-
-        //clear receive_buffer
-        memset(receive_buffer, 0, MAX_I2C_MESSAGE_LEN);
-
-        uint8_t response_command = plaintext[0];
-        uint32_t response_cid;
 
         //compare cmd code
-        if(response_command != COMPONENT_CMD_BOOT){
+        if(response->op_code != COMPONENT_CMD_BOOT){
             print_error("Invalid command message from component")
         }
 
-        //load cid
-        for(int i = 0; i < 4; i++){
-            response_cid = plaintext[i+1] << (8*(3-i));
-        }
         //compare cid
-        if(response_cid != cid){
+        if(response->comp_ID != cid){
             print_error("Component ID: 0x%08x invalid\n", flash_status.component_ids[i]);
             return ERROR_RETURN;
         }
 
         //compare Z value
-        for(int i = 0; i < RAND_Z_SIZE; i++){
-            if (plaintext[i+5] != RAND_Z[i]){
-                print_error("Random number provided is invalid");
-                return ERROR_RETURN;
-            }
+        if (response->rand_z != RAND_Z){
+            print_error("Random number provided is invalid");
+            return ERROR_RETURN;
         }
-
     }
     return SUCCESS_RETURN;
 }
@@ -373,40 +327,27 @@ int attest_component(uint32_t component_id) {
     // Buffers for board link communication
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
     uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
-    uint8_t attest_data[MAX_I2C_MESSAGE_LEN];
+    uint8_t attest_data[MAX_I2C_MESSAGE_LEN-13];
 
     // Set the I2C address of the component
     i2c_addr_t addr = component_id_to_i2c_addr(component_id);
 
-    // Create command message
+    // Create Validate and boot message
     message* command = (message*) transmit_buffer;
 
-
-    unit8_t msg[AES_SIZE];
-    unit8_t ciphertext[AES_SIZE];
+    // Comp_ID
     unit32_t cid = flash_status.component_ids[i];
 
     // op_code
-    msg[0] = COMPONENT_CMD_ATTEST;
+    message->opcode = COMPONENT_CMD_ATTEST;
     
-    //put CompID in msg buffer
-    for(int i = 0; i < 4; i++){
-        msg[i+1] = (uint8_t)((cid >> 8*(3-i)) & 0xFF);
-    }
+    // comp_ID
+    message->comp_ID = cid
 
     Rand_NASYC(RAND_Z, RAND_Z_SIZE);
-    //put Z in msg buffer
-    for(int i = 0; i < RAND_Z_SIZE; i++){
-        msg[i+5] = RAND_Z[i];
-    }
 
-    // Encrypting message and storing it in ciphertext
-    encrypt_sym(&msg, AES_SIZE, &GLOBAL_KEY, &ciphertext);
-
-    //put ciphertext in transmit_buffer
-    for(int i = 0; i < AES_SIZE; i++){
-        transmit_buffer[i] = ciphertext[i];
-    }
+    // rand_z
+    message->rand_z = RAND_Z
 
     // Send out command and receive result
     int len = issue_cmd(addr, transmit_buffer, receive_buffer);
@@ -414,32 +355,19 @@ int attest_component(uint32_t component_id) {
         print_error("Could not attest\n");
         return ERROR_RETURN;
     }
-    int aes_size_response;
-    uint8_t response_len;
 
     // decrypt attestation data
-    full_message* response = (full_message*) receive_buffer
-    decrypt_sym(&(response->params), MAX_I2C_MESSAGE_LEN, &GLOBAL_KEY, &plaintext);
-
-    //store length of message
-    response_len = plaintext[0];
+    message* response = (message*) receive_buffer
 
     //compare Z value
-    for(int i = 0; i < RAND_Z_SIZE; i++){
-        if (plaintext[i+1] != RAND_Z[i]){
-            print_error("Random number provided is invalid");
-            return ERROR_RETURN;
-        }
-    }
-
-    //store attest data
-    for(int i = 0; i < len; i++){
-        attest_data[i] = plaintext[i+RAND_Z_SIZE+1]
+    if (response->rand_z != RAND_Z){
+        print_error("Random number provided is invalid");
+        return ERROR_RETURN;
     }
 
     // Print out attestation data
     print_info("C>0x%08x\n", component_id);
-    print_info("%s", attest_data);
+    print_info("%s", response->remain);
     return SUCCESS_RETURN;
 }
 
@@ -603,15 +531,6 @@ int main() {
     // Initialize board
     init();
     Rand_NASYC(RAND_Z, RAND_Z_SIZE);
-    
-
-    //The key_sync takes the first argument as a char* array, don't know if it will cause problem
-    //Since the GLOBAL_KEY is unit8_t
-    if(synthesized == 0){
-        key_sync(GLOBAL_KEY, flash_status.component_cnt, 
-        flash_status.component_ids[0], flash_status.component_ids[1]);
-    }
-
 
     // Print the component IDs to be helpful
     // Your design does not need to do this
@@ -622,11 +541,11 @@ int main() {
     while (1) {
         recv_input("Enter Command: ", buf);
 
-        //Shouldn't the merging happen here?
-        // if(synthesized == 0){
-        //     key_sync(GLOBAL_KEY, flash_status.component_cnt, 
-        //     flash_status.component_ids[0], flash_status.component_ids[1]);
-        // }
+        if(synthesized == 0){
+            key_sync(GLOBAL_KEY, flash_status.component_cnt, 
+            flash_status.component_ids[0], flash_status.component_ids[1]);
+            synthesized = 1
+        }
 
         // Execute requested command
         if (!strcmp(buf, "list")) { //TODO: 3
