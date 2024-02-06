@@ -82,8 +82,8 @@ char* key_exchange2(char* dest, char* random; uint32_t component_id1, uint32_t c
 
 
 char* key_sync(char* dest, uint32_t component_cnt, uint32_t component_id1, uint32_t component_id2){
-    char* random_number=char[18];
-    random(random_number);
+    char* random_number=char[18];//char???
+    Rand_NASYC(random_number, sizeof(random_number));
     if (component_cnt==2){
         key_exchange2(dest, random_number, component_id1, component_id2);
     }

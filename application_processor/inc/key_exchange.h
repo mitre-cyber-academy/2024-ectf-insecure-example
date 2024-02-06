@@ -2,6 +2,7 @@
 #include "board_link.h"
 #include "simple_i2c_peripheral.h"
 #include "xor.h"
+#include "Code_warehouse/c/Rand_lib.h"
 extern flash_status;
 
 // include random generator from Zack's API
