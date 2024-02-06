@@ -212,13 +212,13 @@ void init() {
 // Send a command to a component and receive the result
 int issue_cmd(i2c_addr_t addr, uint8_t *transmit, uint8_t *receive) {
     // Send message
-    int result = send_packet(addr, sizeof(uint8_t), transmit, GLOBAL_KEY); // maybe change the length of packet to 16?
+    int result = secure_send_packet(addr, sizeof(uint8_t), transmit, GLOBAL_KEY); // maybe change the length of packet to 16?
     if (result == ERROR_RETURN) {
         return ERROR_RETURN;
     }
 
     // Receive message
-    int len = poll_and_receive_packet(addr, receive, GLOBAL_KEY); // Use secure custom function
+    int len = secure_poll_and_receive_packet(addr, receive, GLOBAL_KEY); // Use secure custom function
     if (len == ERROR_RETURN) {
         return ERROR_RETURN;
     }
@@ -327,7 +327,6 @@ int attest_component(uint32_t component_id) {
     // Buffers for board link communication
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
     uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
-    uint8_t attest_data[MAX_I2C_MESSAGE_LEN-13];
 
     // Set the I2C address of the component
     i2c_addr_t addr = component_id_to_i2c_addr(component_id);
