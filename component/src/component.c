@@ -54,7 +54,9 @@
 */
 //AES
 #define AES_SIZE 16 // 16 bytes
-#define RAND_Z_SIZE 8
+#define RAND_Y_SIZE 8
+
+uint8_t RAND_Y[RAND_Z_SIZE];
 uint8_t GLOBAL_KEY[AES_SIZE];
 uint8_t synthesized=0; 
 
@@ -62,11 +64,13 @@ uint8_t synthesized=0;
  * ********************************/
 // Commands received by Component using 32 bit integer
 typedef enum {
-    uint8_t COMPONENT_CMD_NONE,
-    uint8_t COMPONENT_CMD_SCAN,
-    uint8_t COMPONENT_CMD_VALIDATE,
-    uint8_t COMPONENT_CMD_BOOT,
-    uint8_t COMPONENT_CMD_ATTEST,
+    COMPONENT_CMD_NONE,
+    COMPONENT_CMD_SCAN,
+    COMPONENT_CMD_VALIDATE,
+    COMPONENT_CMD_BOOT,
+    COMPONENT_CMD_ATTEST,
+    COMPONENT_CMD_SECURE_SEND_VALIDATE,
+    COMPONENT_CMD_SECURE_SEND_CONFIMRED,
 } component_cmd_t;
 
 /******************************** TYPE DEFINITIONS
@@ -125,6 +129,36 @@ void secure_send(uint8_t *buffer, uint8_t len) {
  * the security requirements.
  */
 int secure_receive(uint8_t *buffer) { return wait_and_receive_packet(buffer); }
+
+// Not sure what the component will send back to AP, for Now I Just assume the trasmit_buffer input will have the message already
+void secure_receive_and_send(uint8_t * receive_buffer, uint8_t * transmit_buffer, uint8_t len){
+    memset(receive_buffer, 0, sizeof(receive_buffer));//Keep eye on all the memset method, Zuhair says this could be error pron
+    secure_wait_and_receive_packet(receive_buffer);
+    message * command = (message *)receive_buffer;
+    Rand_ASYC(RAND_Y, RAND_Y_SIZE);
+    uint8_t validate_buffer[MAX_I2C_MESSAGE_LEN];
+    message * send_packet = (message *)validate_buffer;
+    send_packet->opcode = COMPONENT_CMD_SECURE_SEND_VALIDATE;
+    send_packet->rand_z = command->rand_z;
+    send_packet->comp_ID = COMPONENT_ID;
+    send_packet->rand_y = RAND_Y;
+    secure_send_packet_and_ack(sizeof(validate_buffer), validate_buffer, GLOBAL_KEY);
+    memset(receive_buffer, 0, sizeof(receive_buffer));//Keep eye on all the memset method, Zuhair says this could be error pron
+    if(secure_timed_wait_and_receive_packet(receive_buffer, GLOBAL_KEY)<0){
+        print_error("Component transmitting failed, the transmitting takes too long");
+        return;
+    }
+    message * command = (message*) receive_buffer;
+    if(command->rand_y != RAND_Y){
+        print_error("Component has received expired message");
+    }
+    message * send_packet = (message *)transmit_buffer;
+    send_packet->opcode = COMPONENT_CMD_SECURE_SEND_CONFIMRED;
+    send_packet->rand_z = command->rand_z;
+    send_packet->comp_ID = COMPONENT_ID;
+    secure_send_packet_and_ack(sizeof(transmit_buffer), transmit_buffer, GLOBAL_KEY);
+}
+
 
 /******************************* FUNCTION DEFINITIONS
  * *********************************/
