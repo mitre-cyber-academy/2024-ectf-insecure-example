@@ -250,7 +250,7 @@ int scan_components() {
         // Create command message 
         message* command = (message*) transmit_buffer;
 
-        message->opcode = COMPONENT_CMD_SCAN;
+        command->opcode = COMPONENT_CMD_SCAN;
 
         // Send out command and receive result
         int len = issue_cmd(addr, transmit_buffer, receive_buffer);
