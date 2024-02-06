@@ -6,6 +6,7 @@ extern flash_status;
 #include "Rand_lib.h"
 
 
+
 // premise the simple write and receive is sufficient to send a 16 byte stream 
 // this assumes the key is 16 bytes 
 void key_exchange1(char* dest, uint32_t component_id){

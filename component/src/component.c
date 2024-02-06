@@ -65,21 +65,22 @@ typedef enum {
     uint8_t COMPONENT_CMD_VALIDATE,
     uint8_t COMPONENT_CMD_BOOT,
     uint8_t COMPONENT_CMD_ATTEST,
+    uint8_t COMPONENT_CMD_SECURE_SEND_VALIDATE,
+    uint8_t COMPONENT_CMD_SECURE_SEND_CONFIMRED,
 } component_cmd_t;
 
 /******************************** TYPE DEFINITIONS ********************************/
 // Data structure for receiving messages from the AP
 typedef struct {
-    uint8_t params[AES_SIZE];
+    uint8_t opcode;
+    uint32_t comp_ID;
+    uint8_t rand_z[RAND_Z_SIZE]
+    uint8_t rand_y[RAND_Z_SIZE]
+    uint8_t remain[MAX_I2C_MESSAGE_LEN-21];
 } message;
 
-typedef struct {
-    uint32_t component_id;
-} validate_message;
 
-
-/********************************* FUNCTION DECLARATIONS
- * **********************************/
+/********************************* FUNCTION DECLARATIONS **********************************/
 // Core function definitions
 void component_process_cmd(void);
 void process_boot(void);
@@ -87,19 +88,13 @@ void process_scan(void);
 void process_validate(void);
 void process_attest(void);
 
-/********************************* GLOBAL VARIABLES
- * **********************************/
+/********************************* GLOBAL VARIABLES **********************************/
 // Global varaibles
 uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
 uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
-uint8_t string_buffer[MAX_I2C_MESSAGE_LEN];
-uint8_t cipher_text_buffer[MAX_I2C_MESSAGE_LEN];
-uint8_t plain_text_buffer[MAX_I2C_MESSAGE_LEN];
-uint8_t plaintext[AES_SIZE];
-uint8_t ciphertext[AES_SIZE];
+uint8_t string_buffer[MAX_I2C_MESSAGE_LEN-21];
 
-/******************************* POST BOOT FUNCTIONALITY
- * *********************************/
+/******************************* POST BOOT FUNCTIONALITY *********************************/
 /**
  * @brief Secure Send
  *
@@ -127,6 +122,33 @@ void secure_send(uint8_t *buffer, uint8_t len) {
  */
 int secure_receive(uint8_t *buffer) { return wait_and_receive_packet(buffer); }
 
+
+// Not sure what the component will send back to AP, for Now I Just assume the trasmit_buffer input will have the message already
+void secure_receive_and_send(uint8_t * receive_buffer, uint8_t * transmit_buffer, uint8_t len){
+    memset(receive_buffer, 0, sizeof(receive_buffer));//Keep eye on all the memset method, Zuhair says this could be error pron
+    secure_wait_and_receive_packet(receive_buffer);
+    message * command = (message *)receive_buffer;
+    Rand_ASYC(RAND_Y, RAND_Y_SIZE);
+    uint8_t validate_buffer[MAX_I2C_MESSAGE_LEN];
+    message * send_packet = (message *)validate_buffer;
+    send_packet->opcode = COMPONENT_CMD_SECURE_SEND_VALIDATE;
+    send_packet->rand_z = command->rand_z;
+    send_packet->rand_y = RAND_Y;
+    secure_send_packet_and_ack(sizeof(validate_buffer), validate_buffer, GLOBAL_KEY);
+    memset(receive_buffer, 0, sizeof(receive_buffer));//Keep eye on all the memset method, Zuhair says this could be error pron
+    if(secure_timed_wait_and_receive_packet(receive_buffer, GLOBAL_KEY)<0){
+        print_error("Component transmitting failed, the transmitting takes too long");
+        return;
+    }
+    message * command = (message*) receive_buffer;
+    if(command->rand_y != RAND_Y){
+        print_error("Component has received expired message");
+    }
+    message * send_packet = (message *)transmit_buffer;
+    send_packet->opcode = COMPONENT_CMD_SECURE_SEND_CONFIMRED;
+    send_packet->rand_z = command->rand_z;
+    secure_send_packet_and_ack(sizeof(transmit_buffer), transmit_buffer, GLOBAL_KEY);
+}
 /******************************* FUNCTION DEFINITIONS *********************************/
 
 // Example boot sequence
@@ -164,11 +186,9 @@ void boot() {
 // Handle a command from the AP
 void component_process_cmd() {
     message* command = (message*) receive_buffer;
-    memset(plaintext, 0, sizeof(plaintext));
-    decrypt_sym(command->params, AES_SIZE, GLOBAL_KEY, plaintext);
 
     // Output to application processor dependent on command received
-    switch (plaintext[0]) {
+    switch (command->opcode) {
     case COMPONENT_CMD_VALIDATE:
         process_boot();
         break;
@@ -188,43 +208,45 @@ void component_process_cmd() {
 void process_boot() {
     // The AP requested a boot. 
     //Validate the Component ID
-    for(int i = 0; i < 4; ++i){
-        if(plaintext[1+i] != (uint8_t)((COMPONENT_ID >> 8*(3-i)) & 0xFF)){
-            print_error("The Component ID checks failed at the component sided");
-            return;
-        }
+    message* command = (message*) receive_buffer;
+
+    if(command->comp_ID != COMPONENT_ID){
+        print_error("The Component ID checks failed at the component sided");
+        return;
     }
     //Validation passed
     //Starts Boot
     boot();
     //Send Boot comfirmation message back to AP
-    plaintext[0] = COMPONENT_CMD_BOOT;
     memset(transmit_buffer, 0, sizeof(transmit_buffer));//DO WE NEED THIS?
     message * send_packet = (message*) transmit_buffer;
-    encrypt_sym(plaintext, AES_SIZE, GLOBAL_KEY, send_packet->params);
-    // memcpy((void*)transmit_buffer, ciphertext, AES_SIZE);
-    send_packet_and_ack(sizeof(message), transmit_buffer);
+    send_packet->opcode = COMPONENET_CMD_BOOT;
+    send_packet->rand_z = command->rand_z;
+    send_packet->comp_ID = send_packet->comp_ID;
+    secure_send_packet_and_ack(sizeof(transmit_buffer), transmit_buffer, GLOBAL_KEY);
 }
 
 void process_scan() {
     // The AP requested a scan. Respond with the Component ID
+
+    message* command = (message*) receive_buffer;
     memset(transmit_buffer, 0, sizeof(transmit_buffer));//DO WE NEED THIS?
-    message* packet = (message*) transmit_buffer;
-    for(int i = 0; i < 4; ++i){
-        packet->params[i] = (uint8_t)((COMPONENT_ID >> 8*(3-i)) & 0xFF);
-    }
-    send_packet_and_ack(sizeof(message), transmit_buffer);
+    message * send_packet = (message*) transmit_buffer;
+    send_packet->opcode = COMPONENT_CMD_SCAN;
+    send_packet->rand_z = command->rand_z;
+    send_packet->comp_ID = COMPONENT_ID;
+    secure_send_packet_and_ack(sizeof(transmit_buffer), transmit_buffer, GLOBAL_KEY);
 }
 
 void process_attest() {
     // The AP requested attestation. Respond with the attestation data
 
     //Validate the Component ID; plaintext[1:4]
-    for(int i = 0; i < 4; ++i){
-        if(plaintext[1+i] != (uint8_t)((COMPONENT_ID >> 8*(3-i)) & 0xFF)){
-            print_error("The Component ID checks failed at the component sided");
-            return;
-        }
+    message* command = (message*) receive_buffer;
+
+    if(command->comp_ID != COMPONENT_ID){
+        print_error("The Component ID checks failed at the component sided");
+        return;
     }
 
     // Start to move atttestation data into the transmit_buffer
@@ -232,31 +254,15 @@ void process_attest() {
     uint8_t len = sprintf((char*)string_buffer, "LOC>%s\nDATE>%s\nCUST>%s\n",
                 ATTESTATION_LOC, ATTESTATION_DATE, ATTESTATION_CUSTOMER) + 1;
     
-    uint8_t encrypted_len = 8 + len + 1;
 
-    //Move the size of the string into the start of the message
-    plain_text_buffer[0] = encrypted_len;
-    //Combine the sending plain text
-    //Move the Z into the plain_text_buffer
-    memset(plain_text_buffer, 0, sizeof(plain_text_buffer));
-    for(int i = 0; i < 8: ++i){
-        plain_text_buffer[i+1] = plaintext[i+5]; // plaintext[5:12]
-    }
-    //Move the string buffer into the plain_text_buffer
-    for(int i = 0; i < len; ++i){
-        plain_text_buffer[i+8] = string_buffer[i];
-    }
-
-    //This will encrypt the plain text by sgementing the text into different segement of 16 and encrypt them one by one
-    memset(cipher_text_buffer, 0, sizeof(cipher_string_buffer));
-
-    //Encrypt the message out
-    encrypt_sym(plain_text_buffer, sizeof(plain_text_buffer), GLOBAL_KEY, cipher_text_buffer);
     //Move the cipher text into the transmit_buffer and reday for transfer
     memset(transmit_buffer, 0, sizeof(transmit_buffer));//DO WE NEED THIS?
-    full_message* send_packet = (full_message*)transmit_buffer;
-    memcpy(send_packet->param, cipher_text_buffer, sizeof(cipher_text_buffer));
-    send_packet_and_ack(sizeof(full_message), transmit_buffer);
+    message* send_packet = (message*)transmit_buffer;
+    send_packet->opcode = COMPONENT_CMD_ATTEST;
+    send_packet->rand_z = command->rand_z;
+    send_packet->comp_ID = COMPONENT_ID;
+    send_packet->remain = string_buffer;
+    secure_send_packet_and_ack(sizeof(transmit_buffer), transmit_buffer, GLOBAL_KEY);
 }
 
 
@@ -276,8 +282,8 @@ int main(void) {
     LED_On(LED2);
 
     while (1) {
-        wait_and_receive_packet(receive_buffer);
         if(synthesized == 0){
+
             key_sync(GLOBAL_KEY);
             synthesized = 1;
         }
