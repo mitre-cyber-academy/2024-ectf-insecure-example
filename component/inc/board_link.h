@@ -21,7 +21,7 @@
 #define COMPONENT_ADDR_MASK 0x000000FF             
 #define SUCCESS_RETURN 0
 #define ERROR_RETURN -1
-
+#endif
 /******************************** FUNCTION PROTOTYPES ********************************/
 
 /**
@@ -67,4 +67,5 @@ void secure_send_packet_and_ack(uint8_t len, uint8_t* packet, uint8_t* GLOBAL_KE
 uint8_t wait_and_receive_packet(uint8_t* packet);
 uint8_t secure_wait_and_receive_packet(uint8_t* packet, uint8_t* GLOBAL_KEY);
 int timed_wait_and_receive_packet(uint8_t* packet);
-#endif
+int secure_timed_wait_and_receive_packet(uint8_t* packet, uint8_t* GLOBAL_KEY);
+
