@@ -21,9 +21,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-
-#include "Code_warehouse/c/Rand_lib.h"
-
 #include "board_link.h"
 #include "simple_i2c_peripheral.h"
 
@@ -33,6 +30,10 @@
 
 // Include cache disable
 #include "disable_cache.h"
+#include "Rand_lib.h"
+#include "key_exchange.h"
+#include "op_codes.h"
+
 
 #ifdef POST_BOOT
 #include "led.h"
@@ -129,8 +130,7 @@ void secure_send(uint8_t *buffer, uint8_t len) {
  */
 int secure_receive(uint8_t *buffer) { return wait_and_receive_packet(buffer); }
 
-/******************************* FUNCTION DEFINITIONS
- * *********************************/
+/******************************* FUNCTION DEFINITIONS *********************************/
 
 // Example boot sequence
 // Your design does not need to change this
@@ -278,18 +278,12 @@ int main(void) {
 
     LED_On(LED2);
 
-    //We assume the first message from the AP will be merging the key.
-
     while (1) {
         wait_and_receive_packet(receive_buffer);
         if(synthesized == 0){
-            //The key_sync takes the first argument as a char* array, don't know if it will cause problem
-            //Since the GLOBAL_KEY is unit8_t
             key_sync(GLOBAL_KEY);
             synthesized = 1;
         }
-        else{
-            component_process_cmd();
-        }
+        component_process_cmd();
     }
 }

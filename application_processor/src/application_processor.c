@@ -14,7 +14,6 @@
 
 #include "board.h"
 #include "i2c.h"
-// #include "icc.h"
 #include "led.h"
 #include "mxc_delay.h"
 #include "mxc_device.h"
@@ -31,6 +30,7 @@
 #include "board_link.h"
 #include "host_messaging.h"
 #include "key_exchange.h"
+#include "op_codes.h"
 
 #ifdef CRYPTO_EXAMPLE
 #include "simple_crypto.h"
@@ -45,10 +45,7 @@
 #include "ectf_params.h"
 #include "global_secrets.h"
 
-// Include cache disable
-#include "disable_cache.h"
-
-// Include cache disable
+// Include cache disable header file
 #include "disable_cache.h"
 
 /********************************* Global Variables **********************************/
@@ -82,11 +79,12 @@ uint8_t RAND_Z[RAND_Z_SIZE];
 // AES Macros
 #define AES_SIZE 16// 16 bytes
 
-uint8_t synthesized=0; // when you do the command, check if the thing is synthesized yet or not, if not, synthesize the whole thing.
+uint8_t synthesized=0; // when you initiate any command from the host machine, check if the thing is synthesized yet or not, if not, synthesize the whole thing.
 uint8_t GLOBAL_KEY[AES_SIZE];
 
-/******************************** TYPE DEFINITIONS
- * ********************************/
+flash_entry flash_status;
+
+/******************************** TYPE DEFINITIONS ********************************/
 // Data structure for sending commands to component
 // Params allows for up to MAX_I2C_MESSAGE_LEN - 1 bytes to be send
 // along with the opcode through board_link. This is not utilized by the example
@@ -123,13 +121,8 @@ typedef enum {
     uint8_t COMPONENT_CMD_ATTEST,
 } component_cmd_t;
 
-/********************************* GLOBAL VARIABLES
- * **********************************/
-// Variable for information stored in flash memory
-flash_entry flash_status;
 
-/******************************* POST BOOT FUNCTIONALITY
- * *********************************/
+/******************************* POST BOOT FUNCTIONALITY *********************************/
 /**
  * @brief Secure Send 
  * 
@@ -232,8 +225,7 @@ int issue_cmd(i2c_addr_t addr, uint8_t *transmit, uint8_t *receive) {
     return len
 }
 
-/******************************** COMPONENT COMMS
- * ********************************/
+/******************************** COMPONENT COMMS ********************************/
 
 // We're assuming this doesn't need protection/modification
 int scan_components() { 
@@ -264,7 +256,7 @@ int scan_components() {
         encrypt_sym(&msg, AES_SIZE, &GLOBAL_KEY, &ciphertext);
         //uint8_t *plaintext, size_t len, uint8_t *key, uint8_t *ciphertext
 
-        //put ciphertext in transmit_buffer
+        //put ciphertext in transmit_buffer memcpy
         for(int i = 0; i < AES_SIZE; i++){
             transmit_buffer[i] = ciphertext[i];
         }
@@ -281,7 +273,7 @@ int scan_components() {
     return SUCCESS_RETURN;
 }
 
-// Combining both functions to ensure security
+
 int validate_and_boot_components(){
     // Buffers for board link communication
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
@@ -603,15 +595,6 @@ int main() {
     // Initialize board
     init();
     Rand_NASYC(RAND_Z, RAND_Z_SIZE);
-    
-
-    //The key_sync takes the first argument as a char* array, don't know if it will cause problem
-    //Since the GLOBAL_KEY is unit8_t
-    if(synthesized == 0){
-        key_sync(GLOBAL_KEY, flash_status.component_cnt, 
-        flash_status.component_ids[0], flash_status.component_ids[1]);
-    }
-
 
     // Print the component IDs to be helpful
     // Your design does not need to do this
@@ -620,13 +603,14 @@ int main() {
     // Handle commands forever
     char buf[100];
     while (1) {
+        memset(buf,0,100);
         recv_input("Enter Command: ", buf);
 
         //Shouldn't the merging happen here?
-        // if(synthesized == 0){
-        //     key_sync(GLOBAL_KEY, flash_status.component_cnt, 
-        //     flash_status.component_ids[0], flash_status.component_ids[1]);
-        // }
+        if((synthesized == 0) && (strlen(buf)!=0)){
+            key_sync(GLOBAL_KEY, flash_status.component_cnt, flash_status.component_ids[0], flash_status.component_ids[1]);
+            synthesized=1;
+        }
 
         // Execute requested command
         if (!strcmp(buf, "list")) { //TODO: 3

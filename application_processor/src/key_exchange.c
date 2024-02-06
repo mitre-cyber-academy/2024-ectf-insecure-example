@@ -1,20 +1,17 @@
 extern flash_status;
 #include "key_exchange.h"
-// include random generator from Zack's API
+#include "Rand_lib.h"
+
 
 // premise the simple write and receive is sufficient to send a 16 byte stream 
 // this assumes the key is 16 bytes 
-char* key_exchange1(char* dest, uint32_t component_id){
-    char* cache=char[18];
+void key_exchange1(char* dest, uint32_t component_id){
+    char cache[18];
     i2c_addr_t addr = component_id_to_i2c_addr(flash_status.component_ids[0]);
     XOR(M1,KEY_SHARE,16,cache);
+    cache[17]='1';
     
-    int return_status=0;
-    do{
-        return_status=send_packet(addr, 16, cache2);
-    }while(return_status==Fail){
-        return_status=send_packet(addr, 16, cache2);
-    }
+    int return_status=send_packet(addr, 17, cache);;
 
     int len = poll_and_receive_packet(addr, cache);
     if(len==16){
@@ -27,16 +24,17 @@ char* key_exchange1(char* dest, uint32_t component_id){
     }
 }
 
-// we may need a add a tag to it...
-char* key_exchange2(char* dest, char* random; uint32_t component_id1, uint32_t component_id2){
+
+void key_exchange2(char* dest, char* random; uint32_t component_id1, uint32_t component_id2){
     //Allocation Temp Caches
-    char* cache1=char[18]; // this stores K1
-    char* cache2=char[18]; // this stores k3
+    char cache1[18]; // this stores K1
+    char cache2[18]; // this stores k3
 
     //deal with the first component to obtain k1
     i2c_addr_t addr = component_id_to_i2c_addr(flash_status.component_ids[0]);
     XOR(random,KEY_SHARE,16,cache1);
-    int result = send_packet(addr, 16, cache1);
+    cache1[17]='2';
+    int result = send_packet(addr, 17, cache1);
     int len = poll_and_receive_packet(addr, cache1);
     if(len==16){
         XOR(M1,cache1,16,cache1);
@@ -48,18 +46,12 @@ char* key_exchange2(char* dest, char* random; uint32_t component_id1, uint32_t c
     //deal with the second component to obtain k2
     i2c_addr_t addr = component_id_to_i2c_addr(flash_status.component_ids[1]);
     XOR(random,KEY_SHARE,16,cache2);
+    cache2[17]='2';
     
-    int return_status=0;
-    do{
-        return_status=send_packet(addr, 16, cache2);
-    }while(return_status==Fail){
-        return_status=send_packet(addr, 16, cache2);
-    }
-
+    int return_status=send_packet(addr, 17, cache2);
     int len = poll_and_receive_packet(addr, cache2);
     if(len==16){
         XOR(M2,cache1,16,cache1);
-        // we compute the final key here
         XOR(cache1,cache2,16,dest);
     }else{
         print_info("receiving length ERROR 2 :( \n");
@@ -82,8 +74,8 @@ char* key_exchange2(char* dest, char* random; uint32_t component_id1, uint32_t c
 
 
 char* key_sync(char* dest, uint32_t component_cnt, uint32_t component_id1, uint32_t component_id2){
-    char* random_number=char[18];
-    random(random_number);
+    char random_number[18];
+    Rand_NASYC(random_number, 16);
     if (component_cnt==2){
         key_exchange2(dest, random_number, component_id1, component_id2);
     }
