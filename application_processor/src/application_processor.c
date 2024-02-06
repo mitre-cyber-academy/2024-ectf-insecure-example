@@ -124,39 +124,19 @@ flash_entry flash_status;
 
 /******************************* POST BOOT FUNCTIONALITY *********************************/
 /**
- * @brief Secure Send 
- * 
- * @param address: i2c_addr_t, I2C address of recipient
- * @param buffer: uint8_t*, pointer to data to be send
- * @param len: uint8_t, size of data to be sent
- *
- * Securely send data over I2C. This function is utilized in POST_BOOT
- functionality.
- * This function must be implemented by your team to align with the security
- requirements.
-
-*/
-int secure_send(i2c_addr_t address, uint8_t* buffer, uint8_t len) {
-    return send_packet(address, len, buffer, GLOBAL_KEY);
-}
-
-/**
- * @brief Secure Receive
+ * @brief Secure Send and Receive
  *
  * @param address: i2c_addr_t, I2C address of sender
  * @param buffer: uint8_t*, pointer to buffer to receive data to
+ * @param transmit_buffer: message buffer for transmit
+ * @param receive_buffer: message buffer of receive
  *
  * @return int: number of bytes received, negative if error
  *
- * Securely receive data over I2C. This function is utilized in POST_BOOT
- * functionality. This function must be implemented by your team to align with
- * the security requirements.
+ * Securely send and receive data over I2C. This function is utilized in POST_BOOT
+ * functionality.
  */
-int secure_receive(i2c_addr_t address, uint8_t *buffer) {
-    return poll_and_receive_packet(address, buffer, GLOBAL_KEY);
-}
-
-int secure_send_and_receive(i2c_addr_t address, uint8_t* transmit_buffer, uint8_t* receive_buffer, uint8_t len) {
+int secure_send_and_receive(i2c_addr_t address, uint8_t* transmit_buffer, uint8_t* receive_buffer) {
     uint8_t challenge_buffer[MAX_I2C_MESSAGE_LEN];
     uint8_t answer_buffer[MAX_I2C_MESSAGE_LEN];
 
