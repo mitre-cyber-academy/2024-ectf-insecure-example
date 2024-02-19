@@ -62,5 +62,33 @@
  /nix/store/shci5ykbsfws7kcxpqnn2qqxfw761haw-gcc-arm-embedded-12.3.rel1/arm-none-eabi/include/sys/string.h \
  inc/board_link.h inc/simple_i2c_controller.h \
  /Pace-2024-ectf/msdk/Libraries/PeriphDrivers/Include/MAX78000/mxc_errors.h \
- inc/simple_flash.h inc/host_messaging.h inc/ectf_params.h \
- ../deployment/global_secrets.h
+ inc/simple_flash.h inc/host_messaging.h inc/simple_crypto.h \
+ wolfssl/wolfssl/wolfcrypt/aes.h wolfssl/wolfssl/wolfcrypt/types.h \
+ wolfssl/wolfssl/wolfcrypt/settings.h \
+ wolfssl/wolfssl/wolfcrypt/visibility.h \
+ wolfssl/wolfssl/wolfcrypt/wc_port.h \
+ /nix/store/shci5ykbsfws7kcxpqnn2qqxfw761haw-gcc-arm-embedded-12.3.rel1/arm-none-eabi/include/pthread.h \
+ /nix/store/shci5ykbsfws7kcxpqnn2qqxfw761haw-gcc-arm-embedded-12.3.rel1/arm-none-eabi/include/unistd.h \
+ /nix/store/shci5ykbsfws7kcxpqnn2qqxfw761haw-gcc-arm-embedded-12.3.rel1/arm-none-eabi/include/sys/unistd.h \
+ /nix/store/shci5ykbsfws7kcxpqnn2qqxfw761haw-gcc-arm-embedded-12.3.rel1/arm-none-eabi/include/sys/types.h \
+ /nix/store/shci5ykbsfws7kcxpqnn2qqxfw761haw-gcc-arm-embedded-12.3.rel1/arm-none-eabi/include/machine/endian.h \
+ /nix/store/shci5ykbsfws7kcxpqnn2qqxfw761haw-gcc-arm-embedded-12.3.rel1/arm-none-eabi/include/machine/_endian.h \
+ /nix/store/shci5ykbsfws7kcxpqnn2qqxfw761haw-gcc-arm-embedded-12.3.rel1/arm-none-eabi/include/sys/select.h \
+ /nix/store/shci5ykbsfws7kcxpqnn2qqxfw761haw-gcc-arm-embedded-12.3.rel1/arm-none-eabi/include/sys/_sigset.h \
+ /nix/store/shci5ykbsfws7kcxpqnn2qqxfw761haw-gcc-arm-embedded-12.3.rel1/arm-none-eabi/include/sys/_timeval.h \
+ /nix/store/shci5ykbsfws7kcxpqnn2qqxfw761haw-gcc-arm-embedded-12.3.rel1/arm-none-eabi/include/sys/timespec.h \
+ /nix/store/shci5ykbsfws7kcxpqnn2qqxfw761haw-gcc-arm-embedded-12.3.rel1/arm-none-eabi/include/sys/_timespec.h \
+ /nix/store/shci5ykbsfws7kcxpqnn2qqxfw761haw-gcc-arm-embedded-12.3.rel1/arm-none-eabi/include/sys/_pthreadtypes.h \
+ /nix/store/shci5ykbsfws7kcxpqnn2qqxfw761haw-gcc-arm-embedded-12.3.rel1/arm-none-eabi/include/sys/sched.h \
+ /nix/store/shci5ykbsfws7kcxpqnn2qqxfw761haw-gcc-arm-embedded-12.3.rel1/arm-none-eabi/include/machine/types.h \
+ /nix/store/shci5ykbsfws7kcxpqnn2qqxfw761haw-gcc-arm-embedded-12.3.rel1/arm-none-eabi/include/time.h \
+ /nix/store/shci5ykbsfws7kcxpqnn2qqxfw761haw-gcc-arm-embedded-12.3.rel1/arm-none-eabi/include/machine/time.h \
+ wolfssl/wolfssl/wolfcrypt/memory.h \
+ /nix/store/shci5ykbsfws7kcxpqnn2qqxfw761haw-gcc-arm-embedded-12.3.rel1/arm-none-eabi/include/stdlib.h \
+ /nix/store/shci5ykbsfws7kcxpqnn2qqxfw761haw-gcc-arm-embedded-12.3.rel1/arm-none-eabi/include/machine/stdlib.h \
+ /nix/store/shci5ykbsfws7kcxpqnn2qqxfw761haw-gcc-arm-embedded-12.3.rel1/arm-none-eabi/include/alloca.h \
+ /nix/store/shci5ykbsfws7kcxpqnn2qqxfw761haw-gcc-arm-embedded-12.3.rel1/arm-none-eabi/include/ctype.h \
+ wolfssl/wolfssl/wolfcrypt/random.h wolfssl/wolfssl/wolfcrypt/sha256.h \
+ wolfssl/wolfssl/wolfcrypt/hash.h wolfssl/wolfssl/wolfcrypt/md5.h \
+ wolfssl/wolfssl/wolfcrypt/sha.h wolfssl/wolfssl/wolfcrypt/md4.h \
+ inc/ectf_params.h ../deployment/global_secrets.h
