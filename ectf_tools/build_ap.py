@@ -34,6 +34,15 @@ def build_ap(
     """
 
     try:
+        # Check for Component ID count exceeding 32 to prevent memory corruption in application firmware
+        component_id_list = component_ids.split(",")
+        if len(component_id_list) != int(component_cnt):
+            logger.error(f"List of component IDs provided of length does not match component count {component_cnt}")
+            exit(1)
+        if len(component_id_list) > 32:
+            logger.error("Component count cannot exceed 32")
+            exit(1)
+            
         for component_id in component_ids.split(","):
             component_id = int(component_id.strip(), 0)
             if i2c_address_is_blacklisted(component_id):
