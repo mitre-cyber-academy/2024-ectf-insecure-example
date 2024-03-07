@@ -206,16 +206,16 @@ int secure_pubkey_receive(i2c_addr_t address, uint8_t* buffer, int id) {
     
     // //Decrypt receive
     uint8_t key[KEY_SIZE];
-    memcpy(key, VALIDATION_KEY, KEY_SIZE * sizeof(uint8_t));
+    memcpy(key, symmetric_key, KEY_SIZE * sizeof(uint8_t));
     size_t plaintext_length;
     decrypt_sym(buffer, secure_msg_size, key, buffer, &plaintext_length);
     
     // import public key from byte format
     int test = wc_ecc_init(&publicKeys[id]);
     int result = import_pub_key(buffer, 65, &publicKeys[id]);
-	if (result != 0) {
-		print_error("Import error failed: %d\n", result);
-	}
+    if (result != 0) {
+	print_error("Import error failed: %d\n", result);
+    }
 
     return plaintext_length;
 }
@@ -661,19 +661,12 @@ int main() {
                 secure_symkey_send(flash_status.component_ids[i], symmetric_key, 32);
 
                 // // Receive component public keys
-                // uint8_t receive_buffer[secure_msg_size];
-                // int received_length = secure_pubkey_receive(flash_status.component_ids[i], receive_buffer, i);
-                
-                // // Print received data
-                // printf("Received pubKey %d: ", received_length);
-                // for (int i = 0; i < received_length; i++) {
-                //     printf("%d", receive_buffer[i]);
-                // }
-                // printf("\n");
-
+                uint8_t receive_buffer[secure_msg_size];
+                int received_length = secure_pubkey_receive(flash_status.component_ids[i], receive_buffer, i);
                 // Send public key
-				// secure_send(flash_status.component_ids[i], publicKey, sizeof(publicKey));
+	 	secure_send(flash_status.component_ids[i], publicKey, 65);
             }
+
             keysExchanged = true;
         }
 

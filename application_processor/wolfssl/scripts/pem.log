@@ -1,0 +1,120 @@
+wolfSSL features:
+  Conversion from DER to PEM support NOT compiled in.
+  Encryption support NOT compiled in.
+
+
+1: Convert PEM certificate (first of many) to DER
+    ./examples/pem/pem -in ./certs/server-cert.pem -out ./pem_test_out_pem.170802
+
+2: Convert PEM certificate (second of many) to DER
+    ./examples/pem/pem -in ./certs/server-cert.pem --offset 6000 -out ./pem_test_out_pem.170802
+
+3: RSA private key
+    ./examples/pem/pem -in ./certs/server-key.pem -out ./pem_test_out_pem.170802
+
+4: RSA public key
+    ./examples/pem/pem -in ./certs/server-keyPub.pem -out ./pem_test_out_pem.170802
+
+5: DH parameters
+    ./examples/pem/pem -in ./certs/dh3072.pem -out ./pem_test_out_pem.170802
+
+6: X9.42 parameters
+    ./examples/pem/pem -in ./certs/x942dh2048.pem -out ./pem_test_out_pem.170802
+
+7: DSA parameters
+SKIPPED
+
+8: DSA private key
+SKIPPED
+
+9: ECC private key
+    ./examples/pem/pem -in ./certs/ecc-keyPkcs8.pem -out ./pem_test_out_pem.170802
+
+10: EC PRIVATE KEY
+    ./examples/pem/pem -in ./certs/ecc-privkey.pem -out ./pem_test_out_pem.170802
+
+11: ECC parameters
+SKIPPED
+
+12: ECC public key
+    ./examples/pem/pem -in ./certs/ecc-keyPub.pem -out ./pem_test_out_pem.170802
+
+13: Ed25519 public key
+    ./examples/pem/pem -in ./certs/ed25519/client-ed25519-key.pem -out ./pem_test_out_pem.170802
+
+14: Ed25519 private key
+    ./examples/pem/pem -in ./certs/ed25519/client-ed25519-priv.pem -out ./pem_test_out_pem.170802
+
+15: EdDSA private key
+SKIPPED
+
+16: Ed448 public key
+    ./examples/pem/pem -in ./certs/ed448/client-ed448-key.pem -out ./pem_test_out_pem.170802
+
+17: Ed448 private key
+    ./examples/pem/pem -in ./certs/ed448/client-ed448-priv.pem -out ./pem_test_out_pem.170802
+
+18: Certificate Request
+SKIPPED
+
+19: X509 CRL
+SKIPPED
+
+20: Encrypted Key with header
+SKIPPED
+
+21: Encrypted Key - PKCS#8
+SKIPPED
+
+22: Encrypted Key - PKCS#8 (PKCS#12 PBE)
+SKIPPED
+
+23: Encrypted Key - PKCS#8 (PKCS#5 PBES1-MD5-DES)
+SKIPPED
+
+24: Encrypted Key - PKCS#8 (PKCS#5v2 PBE-SHA1-DES3)
+SKIPPED
+
+25: Encrypt Key - PKCS#8 (Default: PKCS#5 PBES2 AES-256-CBC)
+SKIPPED
+
+26: Encrypt Key - PKCS#8 - Large salt
+SKIPPED
+
+27: Encrypt Key - PKCS#8 - 10000 iterations (DER encoding check)
+SKIPPED
+
+28: Encrypt Key - PKCS#8 - 100 iterations (DER encoding check)
+SKIPPED
+
+29: Encrypt Key - PKCS#8 (PKCS#5 PBES2 AES-128-CBC)
+SKIPPED
+
+30: Encrypt Key - PKCS#8 (PKCS#5 PBES2 DES)
+SKIPPED
+
+31: Encrypt Key - PKCS#8 (PKCS#5 PBES2 DES3)
+SKIPPED
+
+32: Encrypt Key - PKCS#8 (PKCS#5 PBES1-MD5-DES)
+SKIPPED
+
+33: Encrypt Key - PKCS#8 (PKCS#5 PBES1-SHA1-DES)
+SKIPPED
+
+34: Encrypt Key - PKCS#8 (PKCS#12 PBE-SHA1-RC4-128)
+SKIPPED
+
+35: Encrypt Key - PKCS#8 (PKCS#12 PBE-SHA1-DES3)
+SKIPPED
+
+36: Encrypt Key - PKCS#8 (PKCS#12 PBE-SHA1-40RC2-CBC)
+SKIPPED
+
+RESULT: 13/23/36 (pass/skip/total)
+PASSED
+
+in cleanup
+removing existing temporary DER output file
+removing existing temporary output file
+PASS scripts/pem.test (exit status: 0)

@@ -1,0 +1,26 @@
+=====================================
+   wolfssl 5.6.6: ./test-suite.log
+=====================================
+
+# TOTAL: 8
+# PASS:  6
+# SKIP:  2
+# XFAIL: 0
+# FAIL:  0
+# XPASS: 0
+# ERROR: 0
+
+.. contents:: :depth: 2
+
+SKIP: scripts/external
+======================
+
+WOLFSSL_EXTERNAL_TEST NOT set, won't run
+SKIP scripts/external.test (exit status: 77)
+
+SKIP: scripts/openssl
+=====================
+
+WOLFSSL_OPENSSL_TEST NOT set, won't run
+SKIP scripts/openssl.test (exit status: 77)
+

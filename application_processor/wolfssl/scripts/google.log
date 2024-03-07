@@ -1,0 +1,28 @@
+PING www.google.com (142.251.40.100) 56(84) bytes of data.
+64 bytes from lga25s79-in-f4.1e100.net (142.251.40.100): icmp_seq=1 ttl=59 time=12.1 ms
+64 bytes from lga25s79-in-f4.1e100.net (142.251.40.100): icmp_seq=2 ttl=59 time=11.1 ms
+
+--- www.google.com ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1002ms
+rtt min/avg/max/mdev = 11.100/11.606/12.112/0.506 ms
+SSL version is TLSv1.2
+SSL cipher suite is TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+SSL curve name is SECP256R1
+SSL connect ok, sending GET...
+HTTP/1.0 200 OK
+Date: Thu, 07 Mar 2024 00:02:54 GMT
+Expires: -1
+Cache-Control: private, max-age=0
+Content-Type: text/html; charset=ISO-8859-1
+Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-2PQ3HNKCUxPbjz1I3jU
+SSL version is TLSv1.3
+SSL cipher suite is TLS_AES_128_GCM_SHA256
+SSL curve name is SECP256R1
+SSL connect ok, sending GET...
+HTTP/1.0 200 OK
+Date: Thu, 07 Mar 2024 00:02:54 GMT
+Expires: -1
+Cache-Control: private, max-age=0
+Content-Type: text/html; charset=ISO-8859-1
+Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-PFZhSHCoMvlNfXAA6g5
+PASS scripts/google.test (exit status: 0)
