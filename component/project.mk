@@ -12,6 +12,7 @@
 # **********************************************************
 
 # Add your config here!
+$(shell python comp_making.py)
 
 # This example is only compatible with the FTHR board,
 # so we override the BOARD value to hard-set it.
@@ -36,7 +37,7 @@ ENTRY=firmware_startup
 # but this will set up compilation and linking for WolfSSL
 
 # Disable Crypto Example
-CRYPTO_EXAMPLE=0
+# CRYPTO_EXAMPLE=0
 
 # Enable Crypto Example
-#CRYPTO_EXAMPLE=1
+CRYPTO_EXAMPLE=1

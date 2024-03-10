@@ -1,5 +1,4 @@
-# eCTF Pace University
-This repository holds the design for an eCTF MISC system designed by the team at PACE University.
+
 
 
 ## Layout
@@ -92,7 +91,7 @@ options:
 
 **Example Utilization**
 ```bash
-ectf_build_depl -d ../ectf-2024-example
+ectf_build_depl -d .
 ```
 ### Building the Application Processor
 This will run the `Makefile` found in the application processor folder using the following inputs:
@@ -125,7 +124,7 @@ options:
 
 **Example Utilization**
 ```bash
-ectf_build_ap -d ../ectf-2024-example -on ap --p 123456 -c 2 -ids "0x11111124, 0x11111125" -b "Test boot message" -t 0123456789abcdef -od build
+ectf_build_ap -d . -on ap --p 123456 -c 2 -ids "0x11111124, 0x11111125" -b "Test boot message" -t 0123456789abcdef -od build
 ```
 
 ### Building the Component
@@ -158,7 +157,7 @@ options:
 
 **Example Utilization**
 ```bash
-ectf_build_comp -d ../ectf-2024-example -on comp -od build -id 0x11111125 -b "Component boot" -al "McLean" -ad "08/08/08" -ac "Fritz"
+ectf_build_comp -d . -on comp -od build -id 0x11111125 -b "Component boot" -al "McLean" -ad "08/08/08" -ac "Fritz"
 ```
 
 ## Flashing

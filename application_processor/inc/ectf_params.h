@@ -1,8 +1,8 @@
 #ifndef __ECTF_PARAMS__
 #define __ECTF_PARAMS__
-#define AP_PIN "594233"
-#define AP_TOKEN "1357908642cabdef"
-#define COMPONENT_IDS 0x99887720, 0x99887721
+#define AP_PIN "123456"
+#define AP_TOKEN "0123456789abcdef"
+#define COMPONENT_IDS 0xab52772e, 0xe92dff54
 #define COMPONENT_CNT 2
-#define AP_BOOT_MSG "ectf PACE New York"
+#define AP_BOOT_MSG "Test boot message"
 #endif

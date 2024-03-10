@@ -16,8 +16,28 @@ import asyncio
 from pathlib import Path
 import os
 
+import re
+
+
 from ectf_tools.utils import run_shell, package_binary, i2c_address_is_blacklisted
 
+macro_information={}
+
+# End of Global Data Definition: 
+
+def get_id(macro):
+    pattern = r'#define COMPONENT_ID (\d+)'
+    match = re.search(pattern, macro)
+    if match:
+        # Extract the number from the matched group
+        number = match.group(1)
+        return number
+    else:
+        print("Number not found in the string.")
+
+def component_id_to_i2c_addr(component_id):
+    component_id &= 0xFF
+    return component_id
 
 def build_component(
     design: Path,
@@ -49,18 +69,26 @@ def build_component(
     except Exception as e:
         print(e)
         raise
-
-    logger.info("Creating parameters for build")
+    
+    component_id = hex(component_id)
+    logger.info("Creating parameters for build1")
     fh = open(design / Path("component/inc/ectf_params.h"), "w")
     fh.write("#ifndef __ECTF_PARAMS__\n")
     fh.write("#define __ECTF_PARAMS__\n")
     fh.write(f"#define COMPONENT_ID {component_id}\n")
     fh.write(f"#define COMPONENT_BOOT_MSG \"{boot_message}\"\n")
-    fh.write(f"#define ATTESTATION_LOC \"{attestation_location}\"\n")
-    fh.write(f"#define ATTESTATION_DATE \"{attestation_date}\"\n")
-    fh.write(f"#define ATTESTATION_CUSTOMER \"{attestation_customer}\"\n")
+    fh.write(f"#define ATTESTATION_LOC \"{attestation_location}\"\n") 
+    fh.write(f"#define ATTESTATION_DATE \"{attestation_date}\"\n")   
+    fh.write(f"#define ATTESTATION_CUSTOMER \"{attestation_customer}\"\n") 
     fh.write("#endif\n")
     fh.close()
+    fh = open(design / Path("component/inc/ectf_params.h"), "r")
+    lines = fh.readlines()
+    fh.close()
+
+    idid = get_id(lines[2])
+    logger.info(f"Component ID: {idid}")
+    logger.info(f"Component I2C Address: {component_id_to_i2c_addr(int(idid))}")
 
     output_dir = os.path.abspath(output_dir)
     output_elf = f"{output_dir}/{output_name}.elf"

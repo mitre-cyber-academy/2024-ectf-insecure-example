@@ -15,6 +15,7 @@
 #define __BOARD_LINK__
 
 #include "simple_i2c_controller.h"
+#include "simple_crypto.h"
 
 /******************************** MACRO DEFINITIONS ********************************/
 // Last byte of the component ID is the I2C address
@@ -50,7 +51,7 @@ i2c_addr_t component_id_to_i2c_addr(uint32_t component_id);
  * Function sends an arbitrary packet over i2c to a specified component
 */
 int send_packet(i2c_addr_t address, uint8_t len, uint8_t* packet);
-
+int secure_send_packet(i2c_addr_t address, uint8_t* buffer, uint8_t* GLOBAL_KEY);
 /**
  * @brief Poll a component and receive a packet
  * 
@@ -60,5 +61,5 @@ int send_packet(i2c_addr_t address, uint8_t len, uint8_t* packet);
  * @return int: size of data received, ERROR_RETURN if error
 */
 int poll_and_receive_packet(i2c_addr_t address, uint8_t* packet);
-
+int secure_poll_and_receive_packet(i2c_addr_t address, uint8_t *buffer, uint8_t* GLOBAL_KEY);
 #endif
