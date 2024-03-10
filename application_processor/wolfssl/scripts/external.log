@@ -1,2 +1,0 @@
-WOLFSSL_EXTERNAL_TEST NOT set, won't run
-SKIP scripts/external.test (exit status: 77)

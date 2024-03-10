@@ -1,2 +1,0 @@
-WOLFSSL_OPENSSL_TEST NOT set, won't run
-SKIP scripts/openssl.test (exit status: 77)
