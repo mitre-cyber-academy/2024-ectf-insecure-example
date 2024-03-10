@@ -241,38 +241,11 @@ int secure_receive(i2c_addr_t address, uint8_t *buffer) {
         return ERROR_RETURN;
     }
 
-<<<<<<< HEAD
     message* challenge = (message*)challenge_buffer;
     // compare cmd code
     if (challenge->opcode != COMPONENT_CMD_POSTBOOT_VALIDATE) {
         print_error("Invalid command in challenge message from component during post boot");
         return ERROR_RETURN;
-=======
-/**
- * @brief Secure Key Receive
- * 
- * @param address: i2c_addr_t, I2C address of sender
- * @param buffer: uint8_t*, pointer to buffer to receive data to
- * 
- * @return int: number of bytes received, negative if error
- * 
- * Securely receive key data over I2C. 
-*/
-int secure_pubkey_receive(i2c_addr_t address, uint8_t* buffer, int id) {
-    poll_and_receive_packet(address, buffer);
-    
-    // //Decrypt receive
-    uint8_t key[KEY_SIZE];
-    memcpy(key, symmetric_key, KEY_SIZE * sizeof(uint8_t));
-    size_t plaintext_length;
-    decrypt_sym(buffer, secure_msg_size, key, buffer, &plaintext_length);
-    
-    // import public key from byte format
-    int test = wc_ecc_init(&publicKeys[id]);
-    int result = import_pub_key(buffer, 65, &publicKeys[id]);
-    if (result != 0) {
-	print_error("Import error failed: %d\n", result);
->>>>>>> origin/main
     }
 
     message* answer = (message*)answer_buffer;
@@ -823,7 +796,6 @@ int main() {
             continue;
         } 
 
-<<<<<<< HEAD
         if (synthesized == 0 ) {
             if(preboot_validate_component_id() == SUCCESS_RETURN){
                 for(int i = 0; i < 16; ++i){
@@ -849,16 +821,6 @@ int main() {
             // memset(CP_KEY2, 0, 17);
             // poll_and_receive_packet(component_id_to_i2c_addr(flash_status.component_ids[0]), CP_KEY1);
             // poll_and_receive_packet(component_id_to_i2c_addr(flash_status.component_ids[1]), CP_KEY2);
-=======
-                // // Receive component public keys
-                uint8_t receive_buffer[secure_msg_size];
-                int received_length = secure_pubkey_receive(flash_status.component_ids[i], receive_buffer, i);
-                // Send public key
-	 	secure_send(flash_status.component_ids[i], publicKey, 65);
-            }
-
-            keysExchanged = true;
->>>>>>> origin/main
         }
 
         // Shouldn't the merging happen here?
